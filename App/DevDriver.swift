@@ -236,6 +236,8 @@ final class DevDriver: NSObject {
         state["axTrusted"] = PasteSimulator.isTrusted
         state["windows"] = [
             "panel": panel.debugWindow.windowNumber,
+            "bar": bar.debugBarWindow.windowNumber,
+            "result": bar.debugResultWindow.windowNumber,
             "main": workspace.debugWindowNumber("main"),
             "settings": workspace.debugWindowNumber("settings"),
         ]
