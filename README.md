@@ -2,7 +2,7 @@
 
 # PastAi
 
-**AI clipboard manager and text selection toolbar for macOS**
+**Open-source AI clipboard manager and text selection toolbar for macOS**
 
 Clipboard history for every format, a PopClip-style toolbar on any selected text, and an AI agent that can search, organize and edit everything you have copied.
 
@@ -13,6 +13,7 @@ Clipboard history for every format, a PopClip-style toolbar on any selected text
 ![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-arm64-black)
 ![Swift 6](https://img.shields.io/badge/Swift-6-orange)
 ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ![PastAi clipboard panel](docs/images/panel.png)
 
@@ -20,7 +21,7 @@ Clipboard history for every format, a PopClip-style toolbar on any selected text
 
 ## What it does
 
-PastAi is a native Mac clipboard manager in the spirit of Paste, with a text selection toolbar in the spirit of PopClip, and an AI agent built into both. It is written in Swift with system frameworks only, so a small download does what several apps usually do, and nothing you copy passes through third-party code.
+PastAi is an open-source, native Mac clipboard manager in the spirit of Paste, with a text selection toolbar in the spirit of PopClip, and an AI agent built into both. It is written in Swift with system frameworks only, so a small download does what several apps usually do, and nothing you copy passes through third-party code.
 
 | | |
 |---|---|
@@ -161,6 +162,12 @@ extensions/          The extension market
 
 New extensions are the easiest way to help: add a folder under [`extensions`](extensions), run `python3 scripts/build-extension-index.py`, and open a pull request. It appears in everyone's market as soon as it merges.
 
+## License
+
+PastAi is released under the [MIT License](LICENSE).
+
+Brand icons in `extensions` come from [Simple Icons](https://github.com/simple-icons/simple-icons) (CC0). The logos remain trademarks of their owners, and the license above does not grant any rights to them.
+
 ---
 
-Clipboard manager for Mac, Paste alternative, PopClip alternative, macOS text selection toolbar, AI translation on selected text, clipboard history with OCR, AI agent for macOS, Ollama and local LLM clipboard tool.
+Open source clipboard manager for Mac, Paste alternative, PopClip alternative, macOS text selection toolbar, AI translation on selected text, clipboard history with OCR, AI agent for macOS, Ollama and local LLM clipboard tool.

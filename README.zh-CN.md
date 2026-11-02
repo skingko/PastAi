@@ -2,7 +2,7 @@
 
 # PastAi
 
-**macOS 上的 AI 剪贴板管理器和划词工具条**
+**macOS 上的开源 AI 剪贴板管理器和划词工具条**
 
 记录所有格式的剪贴板历史，在任意选中的文字上弹出 PopClip 式工具条，还有一个能搜索、整理和编辑你所有复制内容的 AI Agent。
 
@@ -13,6 +13,7 @@
 ![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-arm64-black)
 ![Swift 6](https://img.shields.io/badge/Swift-6-orange)
 ![零依赖](https://img.shields.io/badge/%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-%E6%97%A0-brightgreen)
+[![MIT 许可证](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ![PastAi 剪贴板面板](docs/images/panel.png)
 
@@ -20,7 +21,7 @@
 
 ## 它能做什么
 
-PastAi 是一款原生 Mac 剪贴板管理器，类似 Paste；同时带有类似 PopClip 的划词工具条，两者都接入了 AI Agent。它用 Swift 和系统框架编写，没有任何第三方依赖，下载只有约 2MB，你复制的内容不会经过任何第三方代码。
+PastAi 是一款开源的原生 Mac 剪贴板管理器，类似 Paste；同时带有类似 PopClip 的划词工具条，两者都接入了 AI Agent。它用 Swift 和系统框架编写，没有任何第三方依赖，下载只有约 2MB，你复制的内容不会经过任何第三方代码。
 
 | | |
 |---|---|
@@ -163,6 +164,12 @@ extensions/          组件市场
 
 贡献组件是最简单的方式：在 [`extensions`](extensions) 下新建文件夹，运行 `python3 scripts/build-extension-index.py`，然后提交 Pull Request。合并后所有人的市场里都会出现。
 
+## 许可证
+
+PastAi 以 [MIT 许可证](LICENSE) 发布。
+
+`extensions` 中的品牌图标来自 [Simple Icons](https://github.com/simple-icons/simple-icons)（CC0）。这些标志仍是各自所有者的商标，上述许可证不授予任何相关权利。
+
 ---
 
-Mac 剪贴板管理器、Paste 替代品、PopClip 替代品、macOS 划词工具、划词翻译、剪贴板历史、图片文字搜索、macOS AI Agent、本地大模型剪贴板工具。
+开源 Mac 剪贴板管理器、Paste 替代品、PopClip 替代品、macOS 划词工具、划词翻译、剪贴板历史、图片文字搜索、macOS AI Agent、本地大模型剪贴板工具。
