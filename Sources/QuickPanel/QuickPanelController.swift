@@ -410,6 +410,7 @@ public final class QuickPanelController: NSObject, NSWindowDelegate {
             "count": model.clips.count,
             "first": model.clips.first?.displayTitle ?? "",
             "notice": model.notice ?? "",
+            "headerColor": model.pinboardColorHex ?? "",
             "showsFilters": model.showsFilters,
             "pinboards": model.pinboards.map(\.name),
             "paused": model.settings.isPaused,

@@ -94,6 +94,13 @@ public final class PanelModel {
 
     deinit { changesTask?.cancel() }
 
+    /// In a Pinboard tab, cards wear the board's color. Everywhere else the color tells kinds of content
+    /// apart, since a clip can belong to several boards.
+    var pinboardColorHex: String? {
+        guard case .pinboard(let id) = tab else { return nil }
+        return pinboards.first { $0.id == id }?.colorHex
+    }
+
     var hasActiveFilters: Bool { kindFilter != nil || sourceFilter != nil || dateFilter != nil }
 
     var isSearching: Bool { !query.isEmpty || hasActiveFilters }

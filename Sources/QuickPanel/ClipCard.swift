@@ -164,7 +164,7 @@ struct ClipCard: View {
         .foregroundStyle(.white)
         .padding(.horizontal, 10)
         .frame(height: 40)
-        .background(clip.kind.tint)
+        .background(model.pinboardColorHex.map { Color(hex: $0) } ?? clip.kind.tint)
     }
 
     private var footer: some View {
