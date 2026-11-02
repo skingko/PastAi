@@ -81,6 +81,30 @@ private func renderPNG(_ text: String, size: NSSize = NSSize(width: 900, height:
         #expect(clip.thumbnailPath != nil)
     }
 
+    @Test func waitingEndsWhenWorkNeverReturns() async {
+        let finished = await EnrichmentPipeline.finishes(within: .milliseconds(50)) {
+            await withCheckedContinuation { (_: CheckedContinuation<Void, Never>) in }
+        }
+        #expect(!finished)
+    }
+
+    @Test func workThatReturnsInTimeCountsAsFinished() async {
+        #expect(await EnrichmentPipeline.finishes(within: .seconds(30)) {})
+    }
+
+    @Test func backfillKeepsGoingPastOnePage() async throws {
+        let service = try makeService()
+        for index in 0..<505 {
+            let snapshot = PasteboardSnapshot(items: [[PasteboardEntry(uti: PasteboardTypes.plainText, data: Data("条目 \(index)".utf8))]])
+            let draft = try #require(ClipBuilder.build(snapshot, source: SourceInfo(bundleID: nil, name: nil)))
+            _ = try await service.ingest(draft)
+        }
+
+        await EnrichmentPipeline(service: service).backfill()
+
+        #expect(try await service.pendingEnrichment(limit: 10).isEmpty)
+    }
+
     @Test func backfillPicksUpClipsLeftUnprocessed() async throws {
         let service = try makeService()
         let snapshot = PasteboardSnapshot(items: [[PasteboardEntry(uti: PasteboardTypes.plainText, data: Data("text".utf8))]])

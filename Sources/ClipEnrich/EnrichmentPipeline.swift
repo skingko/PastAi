@@ -7,6 +7,23 @@ import QuickLookThumbnailing
 import UniformTypeIdentifiers
 import Vision
 
+/// Resumes a continuation exactly once, with whichever result arrives first.
+private final class FirstOutcome: @unchecked Sendable {
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<Bool, Never>?
+
+    init(_ continuation: CheckedContinuation<Bool, Never>) {
+        self.continuation = continuation
+    }
+
+    func settle(_ value: Bool) {
+        lock.withLock {
+            continuation?.resume(returning: value)
+            continuation = nil
+        }
+    }
+}
+
 /// Fills in what capture skipped to stay fast: thumbnails, media metadata and OCR.
 /// Work runs one clip at a time at utility priority so a burst of copies cannot load the machine.
 public actor EnrichmentPipeline {
@@ -16,14 +33,16 @@ public actor EnrichmentPipeline {
 
     static let thumbnailPixels = 520
     static let ocrByteLimit: Int64 = 30 * 1024 * 1024
+    static let clipTimeLimit: Duration = .seconds(60)
 
     public init(service: ClipService) {
         self.service = service
     }
 
+    /// New clips go to the front, so a copy gets its thumbnail straight away even during a long catch-up.
     public func enqueue(_ clipID: Int64) {
         guard !queue.contains(clipID) else { return }
-        queue.append(clipID)
+        queue.insert(clipID, at: 0)
         startWorkerIfNeeded()
     }
 
@@ -31,7 +50,8 @@ public actor EnrichmentPipeline {
     public func backfill() async {
         var previous: [Int64] = []
         while let pending = try? await service.pendingEnrichment(limit: 500), !pending.isEmpty, pending != previous {
-            pending.forEach(enqueue)
+            queue.append(contentsOf: pending.filter { !queue.contains($0) })
+            startWorkerIfNeeded()
             await drain()
             previous = pending
         }
@@ -46,7 +66,7 @@ public actor EnrichmentPipeline {
         guard worker == nil else { return }
         worker = Task(priority: .utility) { [weak self] in
             while let next = await self?.dequeue() {
-                await self?.process(next)
+                await self?.processWithinLimit(next)
             }
             await self?.workerFinished()
         }
@@ -59,6 +79,31 @@ public actor EnrichmentPipeline {
     private func workerFinished() {
         worker = nil
         if !queue.isEmpty { startWorkerIfNeeded() }
+    }
+
+    /// System thumbnailers can hang on a single file and never return. Waiting for them would leave every
+    /// later clip without a thumbnail, so a clip that runs out of time is marked done without one.
+    private func processWithinLimit(_ clipID: Int64) async {
+        let finished = await Self.finishes(within: Self.clipTimeLimit) { [weak self] in await self?.process(clipID) }
+        if !finished {
+            try? await service.saveEnrichment(clipID: clipID, thumbnailPath: nil, ocrText: nil, metadata: nil)
+        }
+    }
+
+    /// Unlike a task group, this returns even if `work` never does. It cannot stop such work, only stop waiting.
+    static func finishes(within limit: Duration, _ work: @escaping @Sendable () async -> Void) async -> Bool {
+        await withCheckedContinuation { continuation in
+            let outcome = FirstOutcome(continuation)
+            let timer = Task {
+                try? await Task.sleep(for: limit)
+                if !Task.isCancelled { outcome.settle(false) }
+            }
+            Task {
+                await work()
+                timer.cancel()
+                outcome.settle(true)
+            }
+        }
     }
 
     private func process(_ clipID: Int64) async {
@@ -247,7 +292,8 @@ enum SystemThumbnail {
     static func write(for url: URL, to target: URL, maxPixels: Int) async -> Bool {
         let size = CGSize(width: maxPixels / 2, height: maxPixels / 2)
         let request = QLThumbnailGenerator.Request(fileAt: url, size: size, scale: 2, representationTypes: .thumbnail)
-        guard let representation = try? await QLThumbnailGenerator.shared.generateBestRepresentation(for: request) else { return false }
+        // Its own generator, because one that hangs on a file also blocks every later request it receives.
+        guard let representation = try? await QLThumbnailGenerator().generateBestRepresentation(for: request) else { return false }
         return ImageTools.writeJPEG(representation.cgImage, to: target, maxPixels: nil)
     }
 }
