@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.whatsapp",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "WhatsApp",
+    "zh": "WhatsApp"
+  },
+  "description": {
+    "en": "Send the selection to a chosen contact.",
+    "zh": "把选中内容发送给指定联系人。"
+  },
+  "category": "social",
+  "regions": [
+    "us"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 4000
+  },
+  "options": [
+    {
+      "id": "phone",
+      "type": "string",
+      "label": {
+        "en": "Contact number",
+        "zh": "联系人号码"
+      },
+      "placeholder": {
+        "en": "Country code and number, digits only",
+        "zh": "国家码加号码，只填数字，如 8613800000000"
+      },
+      "required": true
+    },
+    {
+      "id": "autoSend",
+      "type": "boolean",
+      "label": {
+        "en": "Send automatically",
+        "zh": "自动发送"
+      },
+      "defaultValue": "false"
+    }
+  ],
+  "action": {
+    "type": "url",
+    "url": "whatsapp://send?phone={option.phone}&text={text}",
+    "fallbackURL": "https://wa.me/{option.phone}?text={text}",
+    "returnKeyOption": "autoSend"
+  }
+}

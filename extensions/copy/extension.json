@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.copy",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Copy",
+    "zh": "复制"
+  },
+  "description": {
+    "en": "Copy the selected text.",
+    "zh": "复制选中的文字。"
+  },
+  "category": "text",
+  "regions": [
+    "global"
+  ],
+  "icon": "symbol:doc.on.doc",
+  "action": {
+    "type": "copy"
+  }
+}

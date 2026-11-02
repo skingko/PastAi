@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.youtube",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "YouTube",
+    "zh": "YouTube"
+  },
+  "description": {
+    "en": "Search YouTube.",
+    "zh": "搜索 YouTube 视频。"
+  },
+  "category": "media",
+  "regions": [
+    "us"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://www.youtube.com/results?search_query={text}"
+  }
+}

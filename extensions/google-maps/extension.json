@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.google-maps",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Google Maps",
+    "zh": "谷歌地图"
+  },
+  "description": {
+    "en": "Look up a place on Google Maps.",
+    "zh": "在 Google 地图中查找地点。"
+  },
+  "category": "maps",
+  "regions": [
+    "us"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://www.google.com/maps/search/?api=1&query={text}"
+  }
+}

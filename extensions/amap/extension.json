@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.amap",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Amap",
+    "zh": "高德地图"
+  },
+  "description": {
+    "en": "Look up a place on Amap.",
+    "zh": "在高德地图中查找地点。"
+  },
+  "category": "maps",
+  "regions": [
+    "cn"
+  ],
+  "icon": "text:高",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://ditu.amap.com/search?query={text}"
+  }
+}

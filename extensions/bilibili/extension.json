@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.bilibili",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Bilibili",
+    "zh": "哔哩哔哩"
+  },
+  "description": {
+    "en": "Search Bilibili.",
+    "zh": "搜索哔哩哔哩视频。"
+  },
+  "category": "media",
+  "regions": [
+    "cn"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://search.bilibili.com/all?keyword={text}"
+  }
+}

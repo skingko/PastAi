@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.amazon",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Amazon",
+    "zh": "亚马逊"
+  },
+  "description": {
+    "en": "Search Amazon.",
+    "zh": "在亚马逊搜索商品。"
+  },
+  "category": "shopping",
+  "regions": [
+    "us"
+  ],
+  "icon": "text:a",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://www.amazon.com/s?k={text}"
+  }
+}

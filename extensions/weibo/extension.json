@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.weibo",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Weibo",
+    "zh": "微博"
+  },
+  "description": {
+    "en": "Search Weibo.",
+    "zh": "搜索微博。"
+  },
+  "category": "social",
+  "regions": [
+    "cn"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://s.weibo.com/weibo?q={text}"
+  }
+}

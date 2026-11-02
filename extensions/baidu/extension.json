@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.baidu",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Baidu",
+    "zh": "百度"
+  },
+  "description": {
+    "en": "Search with Baidu.",
+    "zh": "用百度搜索选中内容。"
+  },
+  "category": "search",
+  "regions": [
+    "cn"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://www.baidu.com/s?wd={text}"
+  }
+}

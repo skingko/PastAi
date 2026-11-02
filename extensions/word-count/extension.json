@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.word-count",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Word Count",
+    "zh": "字数统计"
+  },
+  "description": {
+    "en": "Count characters, words and lines.",
+    "zh": "统计字符、词数和行数。"
+  },
+  "category": "text",
+  "regions": [
+    "global"
+  ],
+  "icon": "symbol:number",
+  "action": {
+    "type": "script",
+    "file": "script.js"
+  }
+}

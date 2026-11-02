@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.paste",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Paste",
+    "zh": "粘贴"
+  },
+  "description": {
+    "en": "Replace the selection with the clipboard.",
+    "zh": "用剪贴板内容替换选中的文字。"
+  },
+  "category": "text",
+  "regions": [
+    "global"
+  ],
+  "icon": "symbol:doc.on.clipboard",
+  "match": {
+    "requiresEditable": true
+  },
+  "action": {
+    "type": "paste"
+  }
+}

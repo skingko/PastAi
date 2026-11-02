@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.wikipedia",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Wikipedia",
+    "zh": "维基百科"
+  },
+  "description": {
+    "en": "Search Wikipedia.",
+    "zh": "搜索维基百科。"
+  },
+  "category": "search",
+  "regions": [
+    "us"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://en.wikipedia.org/w/index.php?search={text}"
+  }
+}

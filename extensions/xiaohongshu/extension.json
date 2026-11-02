@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.xiaohongshu",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Xiaohongshu",
+    "zh": "小红书"
+  },
+  "description": {
+    "en": "Search Xiaohongshu.",
+    "zh": "搜索小红书笔记。"
+  },
+  "category": "social",
+  "regions": [
+    "cn"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://www.xiaohongshu.com/search_result?keyword={text}"
+  }
+}

@@ -1,0 +1,801 @@
+{
+  "schema": 1,
+  "extensions": [
+    {
+      "id": "io.github.skingko.pastai.amap",
+      "folder": "amap",
+      "version": "1.0.0",
+      "name": {
+        "en": "Amap",
+        "zh": "高德地图"
+      },
+      "description": {
+        "en": "Look up a place on Amap.",
+        "zh": "在高德地图中查找地点。"
+      },
+      "category": "maps",
+      "regions": [
+        "cn"
+      ],
+      "icon": "text:高",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "982c826da0e62cb41e6bdfbe0913b995582ace8b541675c347c8df887debfccf"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.amazon",
+      "folder": "amazon",
+      "version": "1.0.0",
+      "name": {
+        "en": "Amazon",
+        "zh": "亚马逊"
+      },
+      "description": {
+        "en": "Search Amazon.",
+        "zh": "在亚马逊搜索商品。"
+      },
+      "category": "shopping",
+      "regions": [
+        "us"
+      ],
+      "icon": "text:a",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "cb620457d1503b07d41f56f08f0f4130cde75a4df7dd436abb3b0e7903f061e7"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.baidu",
+      "folder": "baidu",
+      "version": "1.0.0",
+      "name": {
+        "en": "Baidu",
+        "zh": "百度"
+      },
+      "description": {
+        "en": "Search with Baidu.",
+        "zh": "用百度搜索选中内容。"
+      },
+      "category": "search",
+      "regions": [
+        "cn"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "5a288ffc5f229d24d72f4459aaf8841e6aaea5214e77f5c7111f8851280c86f8"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "e2eeaca4c5273ecff775ee4b357091678a7587b2d606190f8e5b7dce4d93a781"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.bilibili",
+      "folder": "bilibili",
+      "version": "1.0.0",
+      "name": {
+        "en": "Bilibili",
+        "zh": "哔哩哔哩"
+      },
+      "description": {
+        "en": "Search Bilibili.",
+        "zh": "搜索哔哩哔哩视频。"
+      },
+      "category": "media",
+      "regions": [
+        "cn"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "806f2a02aa3e6ff5c6b21b8dd71f3aeef7b36b078ec09d11fc4dde92c8c2f68d"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "0b31005ccf765a9d37be2c42f1d36e44572ccadb088250626d9905ae5d4f3d21"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.change-case",
+      "folder": "change-case",
+      "version": "1.0.0",
+      "name": {
+        "en": "Change Case",
+        "zh": "大小写转换"
+      },
+      "description": {
+        "en": "Switch the selection between upper and lower case.",
+        "zh": "在大写和小写之间切换。"
+      },
+      "category": "text",
+      "regions": [
+        "global"
+      ],
+      "icon": "symbol:textformat",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "9d95b7ed11e19d617fa4b52127ce75bd72b8a8c8553a865b0ac80eadc8fa6cf8"
+        },
+        {
+          "path": "script.js",
+          "sha256": "5a797404c71cc1028a6edddb4d8543fe9b6d78af72bd14c485f34acd656b8a1c"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.chatgpt",
+      "folder": "chatgpt",
+      "version": "1.0.0",
+      "name": {
+        "en": "ChatGPT",
+        "zh": "ChatGPT"
+      },
+      "description": {
+        "en": "Ask ChatGPT about the selection.",
+        "zh": "用选中内容向 ChatGPT 提问。"
+      },
+      "category": "ai",
+      "regions": [
+        "us"
+      ],
+      "icon": "symbol:bubble.left.and.text.bubble.right",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "16518e7a7b1446e42f3fca8d36dde27322955290fbe3d7ace1eb47814e021514"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.copy",
+      "folder": "copy",
+      "version": "1.0.0",
+      "name": {
+        "en": "Copy",
+        "zh": "复制"
+      },
+      "description": {
+        "en": "Copy the selected text.",
+        "zh": "复制选中的文字。"
+      },
+      "category": "text",
+      "regions": [
+        "global"
+      ],
+      "icon": "symbol:doc.on.doc",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "5f4e0f1e7087ae29668e12f063ba687d2634df5c54e420bbab6b27e4c933a891"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.douban",
+      "folder": "douban",
+      "version": "1.0.0",
+      "name": {
+        "en": "Douban",
+        "zh": "豆瓣"
+      },
+      "description": {
+        "en": "Search books, films and music on Douban.",
+        "zh": "在豆瓣搜索书影音。"
+      },
+      "category": "media",
+      "regions": [
+        "cn"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "ccb938d1ec5e0c8ad5b3a8d315a0f71aa6906b346e85c0e616bc21e5216ed4e1"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "d937acabda395264eca5bd85ad27606cd212c2c4cd29cfccd89a5b3077ec66a8"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.explain",
+      "folder": "explain",
+      "version": "1.0.0",
+      "name": {
+        "en": "Explain",
+        "zh": "解释"
+      },
+      "description": {
+        "en": "Explain a term, a sentence or a piece of code.",
+        "zh": "解释术语、句子或代码。"
+      },
+      "category": "ai",
+      "regions": [
+        "global"
+      ],
+      "icon": "symbol:lightbulb",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "173e5e939b880ec9aa25baafb62cce7e4d6c3859ef2985bc6bbea55c9e0a3168"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.github",
+      "folder": "github",
+      "version": "1.0.0",
+      "name": {
+        "en": "GitHub",
+        "zh": "GitHub"
+      },
+      "description": {
+        "en": "Search GitHub repositories.",
+        "zh": "搜索 GitHub 仓库。"
+      },
+      "category": "developer",
+      "regions": [
+        "us"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "a1e633098f3190d93c1031e1ff7f19fba997e03f90424278b0b35f47a14ef3cc"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "3bf8cceead820aec50d4ee825a3fd02c5a1cd6665cc9cf4cbf3d9c8861a204bb"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.gmail",
+      "folder": "gmail",
+      "version": "1.0.0",
+      "name": {
+        "en": "Gmail",
+        "zh": "Gmail"
+      },
+      "description": {
+        "en": "Start a new email with the selection.",
+        "zh": "用选中内容新建邮件。"
+      },
+      "category": "apps",
+      "regions": [
+        "us"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "368d5b02f097b6b0b06d012099136e181d29ac9a68d6220462cd14e84cb09460"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "a537f5d85d9a27efa3a5d6086e8df6072ee93f76b4d176639a5e483f74b74b9f"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.google",
+      "folder": "google",
+      "version": "1.0.0",
+      "name": {
+        "en": "Google",
+        "zh": "谷歌搜索"
+      },
+      "description": {
+        "en": "Search the web with Google.",
+        "zh": "用 Google 搜索选中内容。"
+      },
+      "category": "search",
+      "regions": [
+        "us"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "18c266ae9cf00f7994f40f051c07b2a7a2ba47f752a025fc693293932a4f29d2"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "d8cf9fb2d5e234e03254f1d6400d8cc8160c309b010d031a64f37084b5a21d01"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.google-maps",
+      "folder": "google-maps",
+      "version": "1.0.0",
+      "name": {
+        "en": "Google Maps",
+        "zh": "谷歌地图"
+      },
+      "description": {
+        "en": "Look up a place on Google Maps.",
+        "zh": "在 Google 地图中查找地点。"
+      },
+      "category": "maps",
+      "regions": [
+        "us"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "698cf1a45cedf7ab907d20f2aba215dbf1d950a81fde89b6343c0ac40ed3904c"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "26bfa6c871fba0bbd47d931e408b3e704abdcc1693353cc8f9d1846c2faaa732"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.jd",
+      "folder": "jd",
+      "version": "1.0.0",
+      "name": {
+        "en": "JD.com",
+        "zh": "京东"
+      },
+      "description": {
+        "en": "Search JD.com.",
+        "zh": "在京东搜索商品。"
+      },
+      "category": "shopping",
+      "regions": [
+        "cn"
+      ],
+      "icon": "text:京",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "f11b3ae67b38ae889ddc7fc62113d499468db6fd607925dea9b125aa6e39d56f"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.open-link",
+      "folder": "open-link",
+      "version": "1.0.0",
+      "name": {
+        "en": "Open Link",
+        "zh": "打开链接"
+      },
+      "description": {
+        "en": "Open the selected web address.",
+        "zh": "打开选中的网址。"
+      },
+      "category": "web",
+      "regions": [
+        "global"
+      ],
+      "icon": "symbol:safari",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "c0a41dafaab361e5b6f2df4c90210502b78ea4b4687d3178577ddf7a5d499118"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.paste",
+      "folder": "paste",
+      "version": "1.0.0",
+      "name": {
+        "en": "Paste",
+        "zh": "粘贴"
+      },
+      "description": {
+        "en": "Replace the selection with the clipboard.",
+        "zh": "用剪贴板内容替换选中的文字。"
+      },
+      "category": "text",
+      "regions": [
+        "global"
+      ],
+      "icon": "symbol:doc.on.clipboard",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "9dfbff263f52ca3980418259bab4363e9fa6b67eb16c499d5a50910d3c86df2b"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.polish",
+      "folder": "polish",
+      "version": "1.0.0",
+      "name": {
+        "en": "Polish",
+        "zh": "润色"
+      },
+      "description": {
+        "en": "Improve clarity and tone without changing the meaning.",
+        "zh": "改善表达，不改变原意。"
+      },
+      "category": "ai",
+      "regions": [
+        "global"
+      ],
+      "icon": "symbol:wand.and.stars",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "d3e3fa615f0bef978766edcf7144e0374fb32bda458da86ddafdf28245465b10"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.reddit",
+      "folder": "reddit",
+      "version": "1.0.0",
+      "name": {
+        "en": "Reddit",
+        "zh": "Reddit"
+      },
+      "description": {
+        "en": "Search Reddit.",
+        "zh": "搜索 Reddit 讨论。"
+      },
+      "category": "social",
+      "regions": [
+        "us"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "b9409192fe27cdd5d20dc7f9f419b3b606b340366a5b0b9094e5bf4bf8579912"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "00e5008d56567543cf956561e61d5bf9bf629f520c7488a4d9a00164c29dd8ba"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.summarize",
+      "folder": "summarize",
+      "version": "1.0.0",
+      "name": {
+        "en": "Summarize",
+        "zh": "总结"
+      },
+      "description": {
+        "en": "Summarize with your AI model.",
+        "zh": "用 AI 模型总结选中的内容。"
+      },
+      "category": "ai",
+      "regions": [
+        "global"
+      ],
+      "icon": "symbol:text.badge.star",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "05b8232a7868b8a2d2b0b49b95a867bd822e59799be9182e69440575d04bfe0d"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.taobao",
+      "folder": "taobao",
+      "version": "1.0.0",
+      "name": {
+        "en": "Taobao",
+        "zh": "淘宝"
+      },
+      "description": {
+        "en": "Search Taobao.",
+        "zh": "在淘宝搜索商品。"
+      },
+      "category": "shopping",
+      "regions": [
+        "cn"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "3bd12a5491c44e447135e47d89af59159c79f74dc0448f170826957df3da2630"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "4a4217ed77981c3db0c46e4d6ebdf4e9e2e6171d51f5c1584f49b8e4cd97d0e0"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.translate",
+      "folder": "translate",
+      "version": "1.0.0",
+      "name": {
+        "en": "Translate",
+        "zh": "翻译"
+      },
+      "description": {
+        "en": "Translate with your AI model. The result goes to the clipboard and can replace the original text.",
+        "zh": "用你配置的 AI 模型翻译，结果自动加入剪贴板，可一键替换原文。"
+      },
+      "category": "ai",
+      "regions": [
+        "global"
+      ],
+      "icon": "symbol:character.bubble",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "92e99e12df8a8a6cbfd014efa40ca5c28c67e47b227fe58ca63275ff6c96000f"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.wechat",
+      "folder": "wechat",
+      "version": "1.0.0",
+      "name": {
+        "en": "WeChat",
+        "zh": "微信"
+      },
+      "description": {
+        "en": "Copy the selection and open WeChat, ready to paste.",
+        "zh": "复制选中内容并打开微信，直接粘贴发送。"
+      },
+      "category": "social",
+      "regions": [
+        "cn"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "06e1d02a996ec7ff87bc910967420831a995b261e5b06aca3d2c1e9a9260c54d"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "74b48b3d315337ce79cb644933b5f975e19996f564fcc4138ed67d45674c43ca"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.weibo",
+      "folder": "weibo",
+      "version": "1.0.0",
+      "name": {
+        "en": "Weibo",
+        "zh": "微博"
+      },
+      "description": {
+        "en": "Search Weibo.",
+        "zh": "搜索微博。"
+      },
+      "category": "social",
+      "regions": [
+        "cn"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "0ec898343527caca66e07b884d81a879a65ee6f248726379763a1b2b762ecfed"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "44facf47c6bfa06c312c28acda6aa2ed404ef7f68c2897c8f33ad51b6ba94059"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.whatsapp",
+      "folder": "whatsapp",
+      "version": "1.0.0",
+      "name": {
+        "en": "WhatsApp",
+        "zh": "WhatsApp"
+      },
+      "description": {
+        "en": "Send the selection to a chosen contact.",
+        "zh": "把选中内容发送给指定联系人。"
+      },
+      "category": "social",
+      "regions": [
+        "us"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "7193cce061bd97cced6ac0ec58b54e8ee8352761617a5636c44740b5bd14fd67"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "8fb209a53a61618c3483594b3e070481a35575d6aaecbe00a6fe386670c8fb1c"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.wikipedia",
+      "folder": "wikipedia",
+      "version": "1.0.0",
+      "name": {
+        "en": "Wikipedia",
+        "zh": "维基百科"
+      },
+      "description": {
+        "en": "Search Wikipedia.",
+        "zh": "搜索维基百科。"
+      },
+      "category": "search",
+      "regions": [
+        "us"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "aa2690c33129f7187f394857b7bd9c1a3a495f785b3140c1981f84df5ebabb9f"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "2b2acdcf513d7e4d4d6a137bc047d64162ab55955602a01984edf81019efa9f4"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.word-count",
+      "folder": "word-count",
+      "version": "1.0.0",
+      "name": {
+        "en": "Word Count",
+        "zh": "字数统计"
+      },
+      "description": {
+        "en": "Count characters, words and lines.",
+        "zh": "统计字符、词数和行数。"
+      },
+      "category": "text",
+      "regions": [
+        "global"
+      ],
+      "icon": "symbol:number",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "4a0cdc4f3822a541ce8128c81d360e7e9c1b5777e03b58f7ebb88b48b1652cd5"
+        },
+        {
+          "path": "script.js",
+          "sha256": "f29feb5cfa7dc43b060f20a73399a149ab649eafcc79a27317a206269d637ba2"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.x",
+      "folder": "x",
+      "version": "1.0.0",
+      "name": {
+        "en": "X",
+        "zh": "X (Twitter)"
+      },
+      "description": {
+        "en": "Draft a post on X.",
+        "zh": "用选中内容起草 X 帖子。"
+      },
+      "category": "social",
+      "regions": [
+        "us"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "d282489184ca63f1895ce36aec20999d4f6c3ef20750840a4ffde586f3b48dd6"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "693e68863eceb8dc9f72e2acd386ab9c20a10858dab2c076212f7084cb7a32fe"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.xiaohongshu",
+      "folder": "xiaohongshu",
+      "version": "1.0.0",
+      "name": {
+        "en": "Xiaohongshu",
+        "zh": "小红书"
+      },
+      "description": {
+        "en": "Search Xiaohongshu.",
+        "zh": "搜索小红书笔记。"
+      },
+      "category": "social",
+      "regions": [
+        "cn"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "cd581d5fd705b4b94fad40d75fd161545d33c2f54e4452aaf102dcac24c0637e"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "847cacc807f5c236031a7477381daa67fd829d89f3f80c16a547ff2efe050794"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.youtube",
+      "folder": "youtube",
+      "version": "1.0.0",
+      "name": {
+        "en": "YouTube",
+        "zh": "YouTube"
+      },
+      "description": {
+        "en": "Search YouTube.",
+        "zh": "搜索 YouTube 视频。"
+      },
+      "category": "media",
+      "regions": [
+        "us"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "af81be04d023eba8288c7de17eb48596f899475be40dff960e15354b8d431724"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "5038808acbbc4e6edda16cbeb1cc6dec80e4e4ee4e227e039c41229fa222aa8c"
+        }
+      ]
+    },
+    {
+      "id": "io.github.skingko.pastai.zhihu",
+      "folder": "zhihu",
+      "version": "1.0.0",
+      "name": {
+        "en": "Zhihu",
+        "zh": "知乎"
+      },
+      "description": {
+        "en": "Search Zhihu.",
+        "zh": "搜索知乎。"
+      },
+      "category": "social",
+      "regions": [
+        "cn"
+      ],
+      "icon": "file:icon.svg",
+      "files": [
+        {
+          "path": "extension.json",
+          "sha256": "2abf6d6133d542a82839f63ad85a2de551902840e7358d928204c0d8726b9f7f"
+        },
+        {
+          "path": "icon.svg",
+          "sha256": "3c8d91d4f30d220a8655f17aa4e119f5be8c0d66f5fcf939aecaed8699c628ce"
+        }
+      ]
+    }
+  ]
+}

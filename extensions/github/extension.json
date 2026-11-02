@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.github",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "GitHub",
+    "zh": "GitHub"
+  },
+  "description": {
+    "en": "Search GitHub repositories.",
+    "zh": "搜索 GitHub 仓库。"
+  },
+  "category": "developer",
+  "regions": [
+    "us"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://github.com/search?q={text}&type=repositories"
+  }
+}

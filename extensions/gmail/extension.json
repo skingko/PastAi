@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.gmail",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Gmail",
+    "zh": "Gmail"
+  },
+  "description": {
+    "en": "Start a new email with the selection.",
+    "zh": "用选中内容新建邮件。"
+  },
+  "category": "apps",
+  "regions": [
+    "us"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 4000
+  },
+  "action": {
+    "type": "url",
+    "url": "https://mail.google.com/mail/?view=cm&fs=1&body={text}"
+  }
+}

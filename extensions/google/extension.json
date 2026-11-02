@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.google",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Google",
+    "zh": "谷歌搜索"
+  },
+  "description": {
+    "en": "Search the web with Google.",
+    "zh": "用 Google 搜索选中内容。"
+  },
+  "category": "search",
+  "regions": [
+    "us"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://www.google.com/search?q={text}"
+  }
+}

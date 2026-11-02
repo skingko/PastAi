@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.douban",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Douban",
+    "zh": "豆瓣"
+  },
+  "description": {
+    "en": "Search books, films and music on Douban.",
+    "zh": "在豆瓣搜索书影音。"
+  },
+  "category": "media",
+  "regions": [
+    "cn"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://www.douban.com/search?q={text}"
+  }
+}

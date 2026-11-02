@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.chatgpt",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "ChatGPT",
+    "zh": "ChatGPT"
+  },
+  "description": {
+    "en": "Ask ChatGPT about the selection.",
+    "zh": "用选中内容向 ChatGPT 提问。"
+  },
+  "category": "ai",
+  "regions": [
+    "us"
+  ],
+  "icon": "symbol:bubble.left.and.text.bubble.right",
+  "match": {
+    "maxLength": 4000
+  },
+  "action": {
+    "type": "url",
+    "url": "https://chatgpt.com/?q={text}"
+  }
+}

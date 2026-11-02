@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.reddit",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Reddit",
+    "zh": "Reddit"
+  },
+  "description": {
+    "en": "Search Reddit.",
+    "zh": "搜索 Reddit 讨论。"
+  },
+  "category": "social",
+  "regions": [
+    "us"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://www.reddit.com/search/?q={text}"
+  }
+}

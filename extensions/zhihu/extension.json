@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.zhihu",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Zhihu",
+    "zh": "知乎"
+  },
+  "description": {
+    "en": "Search Zhihu.",
+    "zh": "搜索知乎。"
+  },
+  "category": "social",
+  "regions": [
+    "cn"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://www.zhihu.com/search?type=content&q={text}"
+  }
+}

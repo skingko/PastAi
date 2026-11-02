@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.taobao",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Taobao",
+    "zh": "淘宝"
+  },
+  "description": {
+    "en": "Search Taobao.",
+    "zh": "在淘宝搜索商品。"
+  },
+  "category": "shopping",
+  "regions": [
+    "cn"
+  ],
+  "icon": "file:icon.svg",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://s.taobao.com/search?q={text}"
+  }
+}

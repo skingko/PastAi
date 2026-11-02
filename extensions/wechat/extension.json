@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.wechat",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "WeChat",
+    "zh": "微信"
+  },
+  "description": {
+    "en": "Copy the selection and open WeChat, ready to paste.",
+    "zh": "复制选中内容并打开微信，直接粘贴发送。"
+  },
+  "category": "social",
+  "regions": [
+    "cn"
+  ],
+  "icon": "file:icon.svg",
+  "action": {
+    "type": "app",
+    "bundleID": "com.tencent.xinWeChat",
+    "copyFirst": true
+  }
+}

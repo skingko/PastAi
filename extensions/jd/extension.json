@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.jd",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "JD.com",
+    "zh": "京东"
+  },
+  "description": {
+    "en": "Search JD.com.",
+    "zh": "在京东搜索商品。"
+  },
+  "category": "shopping",
+  "regions": [
+    "cn"
+  ],
+  "icon": "text:京",
+  "match": {
+    "maxLength": 500
+  },
+  "action": {
+    "type": "url",
+    "url": "https://search.jd.com/Search?keyword={text}&enc=utf-8"
+  }
+}

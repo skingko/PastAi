@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "id": "io.github.skingko.pastai.change-case",
+  "version": "1.0.0",
+  "author": "PastAi",
+  "name": {
+    "en": "Change Case",
+    "zh": "大小写转换"
+  },
+  "description": {
+    "en": "Switch the selection between upper and lower case.",
+    "zh": "在大写和小写之间切换。"
+  },
+  "category": "text",
+  "regions": [
+    "global"
+  ],
+  "icon": "symbol:textformat",
+  "match": {
+    "regex": "[A-Za-z]",
+    "requiresEditable": true
+  },
+  "action": {
+    "type": "script",
+    "file": "script.js"
+  }
+}
