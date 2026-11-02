@@ -15,7 +15,7 @@
 ![零依赖](https://img.shields.io/badge/%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-%E6%97%A0-brightgreen)
 [![MIT 许可证](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-![PastAi 剪贴板面板](docs/images/panel.png)
+![PastAi 剪贴板面板](docs/images/zh/panel.png)
 
 </div>
 
@@ -31,6 +31,7 @@ PastAi 是一款开源的原生 Mac 剪贴板管理器，类似 Paste；同时�
 | **AI Agent** | 接入你自己的模型，搜索、打标签、合并、改写和清理资料库 |
 | **高速搜索** | 全文搜索，完整支持中文，图片里的文字也能搜到 |
 | **隐私优先** | 本地存储，可按 Pinboard 控制 AI 可见性，Agent 改动内容前必须经你确认 |
+| **中英双语** | 跟随系统语言，组件也一样 |
 
 ## 下载
 
@@ -63,11 +64,19 @@ PastAi 常驻菜单栏。首次使用时会申请**辅助功能**权限，用于
 
 **Pinboard** 用来保存重要内容，永不过期。你也可以在设置里把图片、链接等默认分类固定为标签页。密码管理器的内容会被自动跳过，也可以排除任意应用。
 
+刚用过的内容会自动排到第一张卡片，常用的东西始终触手可及。
+
+**文件留在原处。** 复制文件或整个文件夹时，PastAi 只记录原始路径，不保存副本，所以文件再大也不占用资料库空间。粘贴时直接使用原文件，原文件被移动或删除时会提示你。截图除外：它可能没有别的副本，所以 PastAi 会保留一份。
+
+### 从 Paste 迁移
+
+打开**设置 › 存储**，点**导入**。PastAi 只读取 Paste 的资料库，不做任何修改，并带上历史记录、Pinboard、标题、来源应用和原始时间。密码管理器标记为机密的内容不会导入，名称像“密码”的 Pinboard 会自动对 AI 隐藏。可以重复导入，不会产生重复内容。导入的历史从导入当天起按你的保留期计算。
+
 ## 划词工具条
 
 在任意应用中拖动或双击选中文字，光标旁就会出现工具条。
 
-![划词工具条](docs/images/selection-bar.png)
+![划词工具条](docs/images/zh/selection-bar.png)
 
 默认启用四个组件：
 
@@ -76,7 +85,7 @@ PastAi 常驻菜单栏。首次使用时会申请**辅助功能**权限，用于
 - **谷歌搜索**
 - **WhatsApp**：把选中内容发给你指定的联系人，也可以设置为自动发送。
 
-![翻译弹窗](docs/images/translate.png)
+![翻译弹窗](docs/images/zh/translate.png)
 
 工具条永远不抢焦点，所以"插入"才能直接替换选区。组件只在适用时出现：打开链接只在选中网址时显示，粘贴只在可编辑文本中显示。
 
@@ -84,7 +93,7 @@ PastAi 常驻菜单栏。首次使用时会申请**辅助功能**权限，用于
 
 打开**设置 › 组件**，可以调整工具条顺序、配置每个组件、浏览市场。市场就是本仓库的 [`extensions`](extensions) 目录，直接从 GitHub 获取，app 内也带有一份副本，离线同样可用。
 
-![组件设置](docs/images/extensions.png)
+![组件设置](docs/images/zh/extensions.png)
 
 | 分类 | 组件 |
 |---|---|
@@ -101,7 +110,7 @@ PastAi 常驻菜单栏。首次使用时会申请**辅助功能**权限，用于
 
 ## AI Agent
 
-![带 Agent 的主窗口](docs/images/workspace.png)
+![带 Agent 的主窗口](docs/images/zh/workspace.png)
 
 打开主窗口，直接说你想做什么：
 
@@ -151,6 +160,7 @@ Sources/
   ClipCore/          采集、存储、搜索、粘贴。无 UI，无 AI
   ClipEnrich/        缩略图、媒体元数据、OCR
   ClipExtensions/    组件清单、校验、JavaScript 沙箱、市场
+  ClipImport/        从 Paste 导入
   QuickPanel/        剪贴板面板
   SelectionBar/      划词工具条和结果弹窗
   ClipAgent/         模型客户端、工具、审批、Agent 循环

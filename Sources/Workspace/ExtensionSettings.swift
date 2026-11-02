@@ -55,9 +55,9 @@ final class MarketModel {
         } catch {
             if let bundled, let index = try? ExtensionCatalog.bundledIndex(at: bundled) {
                 entries = index.extensions
-                notice = "无法连接 GitHub，显示的是内置组件。"
+                notice = L("无法连接 GitHub，显示的是内置组件。")
             } else {
-                notice = "无法加载组件市场：\(error.localizedDescription)"
+                notice = L("无法加载组件市场：\(error.localizedDescription)")
             }
         }
     }
@@ -77,7 +77,7 @@ final class MarketModel {
             try library.install(fromDirectory: folder)
             notice = nil
         } catch {
-            notice = "安装失败：\(error.localizedDescription)"
+            notice = L("安装失败：\(error.localizedDescription)")
         }
     }
 
@@ -88,10 +88,17 @@ final class MarketModel {
 }
 
 struct ExtensionSettings: View {
-    private enum Section: String, CaseIterable, Identifiable {
-        case installed = "已安装"
-        case market = "组件市场"
-        var id: String { rawValue }
+    private enum Section: CaseIterable, Identifiable {
+        case installed, market
+
+        var id: Self { self }
+
+        var title: String {
+            switch self {
+            case .installed: L("已安装")
+            case .market: L("组件市场")
+            }
+        }
     }
 
     @Bindable var settings: AppSettings
@@ -103,7 +110,7 @@ struct ExtensionSettings: View {
     var body: some View {
         VStack(spacing: 0) {
             Picker("", selection: $section) {
-                ForEach(Section.allCases) { Text($0.rawValue).tag($0) }
+                ForEach(Section.allCases) { Text($0.title).tag($0) }
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -129,13 +136,13 @@ private struct InstalledExtensions: View {
     var body: some View {
         Form {
             Section {
-                Toggle("选中文本时显示浮条", isOn: $settings.selectionBarEnabled)
-                Toggle("只在按住 ⌥ 选中时显示", isOn: $settings.selectionBarRequiresOption)
-                Toggle("读不到文本时模拟拷贝", isOn: $settings.selectionBarFallbackCopy)
-                    .help("部分应用不提供文字内容，开启后用 ⌘C 读取，随后恢复剪贴板，不会写入历史")
+                Toggle(L("选中文本时显示浮条"), isOn: $settings.selectionBarEnabled)
+                Toggle(L("只在按住 ⌥ 选中时显示"), isOn: $settings.selectionBarRequiresOption)
+                Toggle(L("读不到文本时模拟拷贝"), isOn: $settings.selectionBarFallbackCopy)
+                    .help(L("部分应用不提供文字内容，开启后用 ⌘C 读取，随后恢复剪贴板，不会写入历史"))
                 if !isTrusted {
-                    LabeledContent("需要辅助功能权限才能读取选中的文字") {
-                        Button("开启…") { PasteSimulator.requestTrust() }
+                    LabeledContent(L("需要辅助功能权限才能读取选中的文字")) {
+                        Button(L("开启…")) { PasteSimulator.requestTrust() }
                     }
                 }
             }
@@ -145,12 +152,12 @@ private struct InstalledExtensions: View {
                 }
                 .onMove { library.move(fromOffsets: $0, toOffset: $1) }
             } header: {
-                Text("浮条上的组件")
+                Text(L("浮条上的组件"))
             } footer: {
                 HStack {
-                    Text("拖动调整顺序。").font(.caption).foregroundStyle(.secondary)
+                    Text(L("拖动调整顺序。")).font(.caption).foregroundStyle(.secondary)
                     Spacer()
-                    Button("让 Agent 写一个", action: onAskAgent).controlSize(.small)
+                    Button(L("让 Agent 写一个"), action: onAskAgent).controlSize(.small)
                 }
             }
         }
@@ -185,7 +192,7 @@ private struct ExtensionRow: View {
                         Image(systemName: "slider.horizontal.3")
                     }
                     .buttonStyle(.borderless)
-                    .help("设置")
+                    .help(L("设置"))
                 }
                 Toggle("", isOn: Binding(get: { item.isEnabled }, set: { library.setEnabled(item.id, $0) }))
                     .labelsHidden()
@@ -199,7 +206,7 @@ private struct ExtensionRow: View {
             }
         }
         .contextMenu {
-            Button("移除", role: .destructive) { try? library.remove(item.id) }
+            Button(L("移除"), role: .destructive) { try? library.remove(item.id) }
         }
     }
 }
@@ -241,12 +248,12 @@ private struct OptionField: View {
 private struct ExtensionMarket: View {
     @Bindable var market: MarketModel
 
-    private let regions = [("all", "全部"), ("global", "通用"), ("us", "美国"), ("cn", "中国")]
+    private let regions = [("all", L("全部")), ("global", L("通用")), ("us", L("美国")), ("cn", L("中国"))]
 
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 10) {
-                TextField("搜索组件", text: $market.search).textFieldStyle(.roundedBorder)
+                TextField(L("搜索组件"), text: $market.search).textFieldStyle(.roundedBorder)
                 Picker("", selection: $market.region) {
                     ForEach(regions, id: \.0) { Text($0.1).tag($0.0) }
                 }
@@ -258,7 +265,7 @@ private struct ExtensionMarket: View {
                     Image(systemName: "arrow.clockwise")
                 }
                 .disabled(market.isLoading)
-                .help("刷新")
+                .help(L("刷新"))
             }
             .padding(.horizontal, 16)
             if let notice = market.notice {
@@ -270,7 +277,7 @@ private struct ExtensionMarket: View {
             .listStyle(.inset)
             .overlay {
                 if market.visibleEntries.isEmpty, !market.isLoading {
-                    ContentUnavailableView("没有找到组件", systemImage: "puzzlepiece.extension")
+                    ContentUnavailableView(L("没有找到组件"), systemImage: "puzzlepiece.extension")
                 }
             }
         }
@@ -302,11 +309,11 @@ private struct MarketRow: View {
         } else {
             switch market.status(of: entry) {
             case .available:
-                Button("安装") { Task { await market.install(entry) } }.controlSize(.small)
+                Button(L("安装")) { Task { await market.install(entry) } }.controlSize(.small)
             case .updateAvailable:
-                Button("更新") { Task { await market.install(entry) } }.controlSize(.small).buttonStyle(.borderedProminent)
+                Button(L("更新")) { Task { await market.install(entry) } }.controlSize(.small).buttonStyle(.borderedProminent)
             case .installed:
-                Text("已安装").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text(L("已安装")).font(.system(size: 11)).foregroundStyle(.secondary)
             }
         }
     }

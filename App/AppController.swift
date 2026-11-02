@@ -30,7 +30,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             service = try ClipService(paths: paths)
         } catch {
             let alert = NSAlert(error: error)
-            alert.messageText = "无法打开 PastAi 资料库"
+            alert.messageText = L("无法打开 PastAi 资料库")
             alert.runModal()
             NSApp.terminate(nil)
             return
@@ -52,7 +52,10 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         panel = QuickPanelController(service: service, settings: settings, pasteboard: pasteboard, simulatesPaste: !scripted)
         let bundledExtensions = Bundle.main.resourceURL?.appending(path: "extensions", directoryHint: .isDirectory)
         extensions = ExtensionLibrary(paths: service.paths)
-        if let bundledExtensions { extensions.seedDefaults(from: bundledExtensions) }
+        if let bundledExtensions {
+            extensions.seedDefaults(from: bundledExtensions)
+            extensions.updateBundled(from: bundledExtensions)
+        }
         let scripts = SandboxedScriptRunner(executable: Bundle.main.executableURL ?? URL(fileURLWithPath: CommandLine.arguments[0]))
         workspace = WorkspaceController(
             service: service, settings: settings, extensions: extensions, scripts: scripts,
@@ -70,6 +73,9 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         selectionBar.openModelSettings = { [weak self] in self?.workspace.showModelSettings() }
         selectionBar.openExtensionSettings = { [weak self] in self?.workspace.showExtensionSettings() }
         workspace.onHotKeyChanged = { [weak self] combo in self?.registerHotKey(combo) }
+        workspace.onImported = { [weak self] in
+            Task { await self?.enrichment.backfill() }
+        }
 
         panel.onOpenMainWindow = { [weak self] in self?.workspace.showLibrary() }
         panel.onOpenSettings = { [weak self] in self?.workspace.showSettings() }
@@ -105,8 +111,8 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func registerHotKey(_ combo: HotKeyCombo) {
         if !hotKey.register(combo) {
             let alert = NSAlert()
-            alert.messageText = "快捷键 \(HotKeyFormatter.describe(combo)) 已被占用"
-            alert.informativeText = "请在设置里换一个，或者从菜单栏图标打开剪贴板。"
+            alert.messageText = L("快捷键 \(HotKeyFormatter.describe(combo)) 已被占用")
+            alert.informativeText = L("请在设置里换一个，或者从菜单栏图标打开剪贴板。")
             alert.runModal()
         }
     }
@@ -116,12 +122,14 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func warnIfPasteboardBlocked() {
         guard NSPasteboard.general.accessBehavior == .alwaysDeny else { return }
         let alert = NSAlert()
-        alert.messageText = "PastAi 无法读取剪贴板"
-        alert.informativeText = "请在 系统设置 › 隐私与安全性 › 粘贴 中允许 PastAi 访问，否则不会记录任何内容。"
+        alert.messageText = L("PastAi 无法读取剪贴板")
+        alert.informativeText = L("请在 系统设置 › 隐私与安全性 › 粘贴 中允许 PastAi 访问，否则不会记录任何内容。")
         alert.runModal()
     }
 
     private func scheduleRetention() {
+        let service = service!
+        Task.detached(priority: .background) { try? await service.releaseFileSnapshots() }
         runRetention()
         let timer = Timer(timeInterval: 3_600, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.runRetention() }
@@ -166,29 +174,29 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         let appItem = NSMenuItem()
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "设置…", action: #selector(openSettings), keyEquivalent: ",").target = self
+        appMenu.addItem(withTitle: L("设置…"), action: #selector(openSettings), keyEquivalent: ",").target = self
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "退出 PastAi", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: L("退出 PastAi"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = appMenu
         main.addItem(appItem)
 
         let editItem = NSMenuItem()
-        let editMenu = NSMenu(title: "编辑")
-        editMenu.addItem(withTitle: "撤销", action: Selector(("undo:")), keyEquivalent: "z")
-        let redo = editMenu.addItem(withTitle: "重做", action: Selector(("redo:")), keyEquivalent: "z")
+        let editMenu = NSMenu(title: L("编辑"))
+        editMenu.addItem(withTitle: L("撤销"), action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = editMenu.addItem(withTitle: L("重做"), action: Selector(("redo:")), keyEquivalent: "z")
         redo.keyEquivalentModifierMask = [.command, .shift]
         editMenu.addItem(.separator())
-        editMenu.addItem(withTitle: "剪切", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        editMenu.addItem(withTitle: "拷贝", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        editMenu.addItem(withTitle: "粘贴", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-        editMenu.addItem(withTitle: "全选", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editMenu.addItem(withTitle: L("剪切"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: L("拷贝"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: L("粘贴"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: L("全选"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editItem.submenu = editMenu
         main.addItem(editItem)
 
         let windowItem = NSMenuItem()
-        let windowMenu = NSMenu(title: "窗口")
-        windowMenu.addItem(withTitle: "关闭窗口", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
-        windowMenu.addItem(withTitle: "最小化", action: #selector(NSWindow.miniaturize(_:)), keyEquivalent: "m")
+        let windowMenu = NSMenu(title: L("窗口"))
+        windowMenu.addItem(withTitle: L("关闭窗口"), action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        windowMenu.addItem(withTitle: L("最小化"), action: #selector(NSWindow.miniaturize(_:)), keyEquivalent: "m")
         windowItem.submenu = windowMenu
         main.addItem(windowItem)
 
@@ -207,14 +215,14 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Rebuilt on open so the pause title and the hotkey hint are always current.
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
-        let open = menu.addItem(withTitle: "打开剪贴板 (\(HotKeyFormatter.describe(settings.hotKey)))", action: #selector(togglePanel), keyEquivalent: "")
+        let open = menu.addItem(withTitle: L("打开剪贴板 (\(HotKeyFormatter.describe(settings.hotKey)))"), action: #selector(togglePanel), keyEquivalent: "")
         open.target = self
-        menu.addItem(withTitle: "打开主窗口", action: #selector(openLibrary), keyEquivalent: "").target = self
+        menu.addItem(withTitle: L("打开主窗口"), action: #selector(openLibrary), keyEquivalent: "").target = self
         menu.addItem(.separator())
-        menu.addItem(withTitle: settings.isPaused ? "继续记录" : "暂停记录", action: #selector(togglePause), keyEquivalent: "").target = self
-        menu.addItem(withTitle: "设置…", action: #selector(openSettings), keyEquivalent: "").target = self
+        menu.addItem(withTitle: settings.isPaused ? L("继续记录") : L("暂停记录"), action: #selector(togglePause), keyEquivalent: "").target = self
+        menu.addItem(withTitle: L("设置…"), action: #selector(openSettings), keyEquivalent: "").target = self
         menu.addItem(.separator())
-        menu.addItem(withTitle: "退出 PastAi", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "")
+        menu.addItem(withTitle: L("退出 PastAi"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "")
     }
 
     @objc private func togglePanel() { panel.toggle() }

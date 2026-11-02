@@ -1,5 +1,6 @@
 import AppKit
 import ClipAgent
+import ClipCore
 import SwiftUI
 
 /// Renders an assistant reply. Parsed on each streamed chunk, so it must stay cheap.
@@ -87,7 +88,7 @@ private struct CodeBlock: View {
         .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(alignment: .topTrailing) {
             if isHovered {
-                Button(didCopy ? "已拷贝" : "拷贝") {
+                Button(didCopy ? L("已拷贝") : L("拷贝")) {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(text, forType: .string)
                     didCopy = true

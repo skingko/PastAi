@@ -1,4 +1,5 @@
 import AppKit
+import UniformTypeIdentifiers
 
 /// macOS has no pasteboard change notification, so `changeCount` is polled. Reading that integer is cheap
 /// and does not touch content; a short interval keeps quick successive copies from being missed.
@@ -97,7 +98,6 @@ public final class CaptureService {
 
         let source = SourceInfo(bundleID: frontmost?.bundleIdentifier, name: frontmost?.localizedName)
         let expectedCount = pasteboard.changeCount
-        let limit = settings.snapshotLimitBytes
         nonisolated(unsafe) let board = pasteboard
         let service = service
         let previous = pipeline
@@ -109,7 +109,7 @@ public final class CaptureService {
             guard let draft = ClipBuilder.build(snapshot, source: source) else { return }
             guard let result = try? await service.ingest(draft), result.isNew else { return }
             await self?.didCapture(result.clipID)
-            await FileSnapshotter(service: service).snapshotFiles(of: result.clipID, limit: limit)
+            await FileSnapshotter(service: service).snapshotFiles(of: result.clipID)
         }
     }
 
@@ -118,16 +118,27 @@ public final class CaptureService {
     }
 }
 
-/// Keeps a private copy of small files so a clip survives the original being moved or deleted.
+/// Copied files and folders stay where they are and a clip records only the path, so the library never
+/// grows with what you copy. Screenshots are the exception: there may be no other copy, and screenshot
+/// tools often write them to temporary folders the system clears.
 public struct FileSnapshotter: Sendable {
+    private static let temporaryRoots = ["/private/var/folders/", "/var/folders/", "/private/tmp/", "/tmp/"]
+
     let service: ClipService
 
     public init(service: ClipService) { self.service = service }
 
-    public func snapshotFiles(of clipID: Int64, limit: Int64) async {
+    public static func needsOwnCopy(_ file: ClipFile) -> Bool {
+        guard !file.isDirectory else { return false }
+        if getxattr(file.originalPath, "com.apple.metadata:kMDItemIsScreenCapture", nil, 0, 0, 0) >= 0 { return true }
+        let isImage = file.uti.flatMap(UTType.init)?.conforms(to: .image) ?? false
+        return isImage && temporaryRoots.contains { file.originalPath.hasPrefix($0) }
+    }
+
+    public func snapshotFiles(of clipID: Int64) async {
         guard let detail = try? await service.detail(id: clipID) else { return }
         let directory = service.paths.files.appending(path: String(clipID), directoryHint: .isDirectory)
-        for file in detail.files where !file.isDirectory && file.byteSize <= limit {
+        for file in detail.files where Self.needsOwnCopy(file) {
             let source = URL(fileURLWithPath: file.originalPath)
             let relative = "\(clipID)/\(file.position)-\(file.fileName)"
             let destination = service.paths.files.appending(path: relative)

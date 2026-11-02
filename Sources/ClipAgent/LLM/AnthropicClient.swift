@@ -1,3 +1,4 @@
+import ClipCore
 import Foundation
 import os
 
@@ -240,7 +241,7 @@ struct AnthropicStreamAssembler {
             return []
 
         case "error":
-            throw LLMError.invalidResponse(event["error"]?["message"]?.string ?? "流式响应出错")
+            throw LLMError.invalidResponse(event["error"]?["message"]?.string ?? L("流式响应出错"))
 
         default:
             return []

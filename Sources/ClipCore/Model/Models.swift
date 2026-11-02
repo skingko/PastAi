@@ -5,17 +5,25 @@ public enum ClipKind: String, Sendable, CaseIterable, Codable, Identifiable {
 
     public var id: String { rawValue }
 
+    /// The whole category, for tabs and filters, where English wants a plural.
+    public var categoryName: String {
+        switch (AppLanguage.current, self) {
+        case (.english, .link), (.english, .color), (.english, .image), (.english, .video), (.english, .file): displayName + "s"
+        default: displayName
+        }
+    }
+
     public var displayName: String {
         switch self {
-        case .text: "文本"
-        case .link: "链接"
-        case .code: "代码"
-        case .color: "颜色"
-        case .image: "图片"
-        case .video: "视频"
-        case .audio: "音频"
-        case .file: "文件"
-        case .other: "其他"
+        case .text: L("文本")
+        case .link: L("链接")
+        case .code: L("代码")
+        case .color: L("颜色")
+        case .image: L("图片")
+        case .video: L("视频")
+        case .audio: L("音频")
+        case .file: L("文件")
+        case .other: L("其他")
         }
     }
 

@@ -258,6 +258,84 @@ extension ClipService {
         #expect(try await service.list(ClipQuery()).map(\.id).sorted() == [pinned, fresh].sorted())
     }
 
+    @Test func aUsedClipBecomesTheFirstCard() async throws {
+        let service = try makeService()
+        let now = Date()
+        let older = try await service.addText("较早", at: now.addingTimeInterval(-100))
+        let newer = try await service.addText("较新", at: now.addingTimeInterval(-50))
+        #expect(try await service.list(ClipQuery()).map(\.id) == [newer, older])
+
+        try await service.recordUse(clipID: older, now: now)
+
+        #expect(try await service.list(ClipQuery()).map(\.id) == [older, newer])
+        let clip = try #require(try await service.detail(id: older)).clip
+        #expect(clip.useCount == 1)
+        #expect(clip.createdAt < clip.lastCopiedAt)
+    }
+
+    @Test func aUsedClipMovesToTheFrontOfItsPinboardToo() async throws {
+        let service = try makeService()
+        let now = Date()
+        let board = try await service.createPinboard(name: "常用")
+        let first = try await service.addText("甲", at: now.addingTimeInterval(-100))
+        let second = try await service.addText("乙", at: now.addingTimeInterval(-90))
+        try await service.apply([.addToPinboard(clipID: first, pinboardID: board)], source: .user, summary: "x", now: now.addingTimeInterval(-80))
+        try await service.apply([.addToPinboard(clipID: second, pinboardID: board)], source: .user, summary: "x", now: now.addingTimeInterval(-70))
+        #expect(try await service.list(ClipQuery(collection: .pinboard(board))).map(\.id) == [second, first])
+
+        try await service.recordUse(clipID: first, now: now)
+
+        #expect(try await service.list(ClipQuery(collection: .pinboard(board))).map(\.id) == [first, second])
+    }
+
+    @Test func aFileReferenceTakesNoRoomInTheMediaCap() async throws {
+        let service = try makeService()
+        let now = Date()
+        let picture = PasteboardSnapshot(items: [[PasteboardEntry(uti: PasteboardTypes.png, data: Data(repeating: 7, count: 2_000))]])
+        let image = try await service.ingest(try #require(ClipBuilder.build(picture, source: SourceInfo(bundleID: nil, name: nil))), now: now).clipID
+        var draft = try #require(ClipBuilder.build(picture, source: SourceInfo(bundleID: nil, name: nil)))
+        draft.kind = .video
+        draft.contentHash = "reference"
+        draft.entries = []
+        draft.files = [DraftFile(path: "/Volumes/nas/huge.mov", fileName: "huge.mov", uti: "public.movie", byteSize: 500_000_000_000, isDirectory: false, bookmark: nil)]
+        let reference = try await service.ingest(draft, now: now).clipID
+
+        let report = try await service.runRetention(RetentionPolicy(historyDays: 0, mediaCapBytes: 10_000), now: now)
+
+        #expect(report.evicted == 0)
+        #expect(try await service.detail(id: image) != nil)
+        #expect(try await service.detail(id: reference) != nil)
+    }
+
+    @Test func importedClipsRetainTheirDateButGetAFullRetentionPeriod() async throws {
+        let service = try makeService()
+        let now = Date()
+        let original = now.addingTimeInterval(-400 * 86_400)
+        let snapshot = PasteboardSnapshot(items: [[PasteboardEntry(uti: PasteboardTypes.plainText, data: Data("旧记录".utf8))]])
+        let draft = try #require(ClipBuilder.build(snapshot, source: SourceInfo(bundleID: nil, name: nil)))
+        let id = try await service.ingest(draft, now: original, importedAt: now).clipID
+
+        try await service.runRetention(policy, now: now)
+        let clip = try #require(try await service.detail(id: id)).clip
+        #expect(clip.deletedAt == nil)
+        #expect(abs(clip.lastCopiedAt.timeIntervalSince(original)) < 1)
+    }
+
+    @Test func importingNeverRegressesAClipAlreadyInTheLibrary() async throws {
+        let service = try makeService()
+        let now = Date()
+        let id = try await service.addText("两边都有", at: now)
+        let snapshot = PasteboardSnapshot(items: [[PasteboardEntry(uti: PasteboardTypes.plainText, data: Data("两边都有".utf8))]])
+        let draft = try #require(ClipBuilder.build(snapshot, source: SourceInfo(bundleID: nil, name: nil)))
+        let result = try await service.ingest(draft, now: now.addingTimeInterval(-1_000), importedAt: now)
+
+        #expect(!result.isNew)
+        #expect(result.clipID == id)
+        let clip = try #require(try await service.detail(id: id)).clip
+        #expect(clip.copyCount == 1)
+        #expect(abs(clip.lastCopiedAt.timeIntervalSince(now)) < 1)
+    }
+
     @Test func purgesTrashAfterThirtyDays() async throws {
         let service = try makeService()
         let now = Date()

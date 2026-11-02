@@ -5,5 +5,6 @@ function run(input) {
   var latinWords = (text.replace(han, ' ').match(/\S+/g) || []).length;
   var characters = Array.from(text).length;
   var lines = text.split('\n').length;
-  return { show: '字符 ' + characters + '\n字词 ' + (hanCount + latinWords) + '\n行数 ' + lines };
+  var labels = input.language === 'zh' ? ['字符', '字词', '行数'] : ['Characters', 'Words', 'Lines'];
+  return { show: labels[0] + ' ' + characters + '\n' + labels[1] + ' ' + (hanCount + latinWords) + '\n' + labels[2] + ' ' + lines };
 }

@@ -90,6 +90,13 @@ final class DevDriver: NSObject {
             savedClipboard = nil
         case "market-refresh": workspace.debugMarketRefresh()
         case "market-install": workspace.debugMarketInstall(argument)
+        case "snapshot-panel": snapshot(panel.debugWindow, to: argument)
+        case "snapshot-frame":
+            let fields = argument.split(separator: " ", maxSplits: 1).map(String.init)
+            if fields.count == 2, let window = workspace.debugWindow(fields[0]) { snapshotFrame(window, to: fields[1]) }
+        case "panel-width":
+            let frame = panel.debugWindow.frame
+            panel.debugWindow.setFrame(NSRect(x: frame.minX, y: frame.minY, width: Double(argument) ?? frame.width, height: frame.height), display: true)
         case "snapshot-bar": snapshot(bar.debugBarWindow, to: argument)
         case "snapshot-result": snapshot(bar.debugResultWindow, to: argument)
         case "retry": workspace.debugRetry()
@@ -173,6 +180,53 @@ final class DevDriver: NSObject {
         try? bitmap.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
     }
 
+    /// Draws the whole window, title bar included, from inside the app, so it works on a locked screen.
+    /// A glass sidebar draws through a portal that layer rendering cannot follow, so its rows go on separately.
+    private func snapshotFrame(_ window: NSWindow, to path: String) {
+        guard let frame = window.contentView?.superview else { return }
+        let size = frame.bounds.size
+        guard let bitmap = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: Int(size.width), pixelsHigh: Int(size.height),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+            bytesPerRow: 0, bitsPerPixel: 0
+        ), let context = NSGraphicsContext(bitmapImageRep: bitmap) else { return }
+
+        let rows = sidebarRows(in: frame)
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = context
+        NSColor.white.setFill()
+        frame.bounds.fill()
+        if let rows {
+            NSColor(calibratedWhite: 0.945, alpha: 1).setFill()
+            NSRect(x: 0, y: 0, width: rows.convert(rows.bounds, to: frame).maxX + 2, height: size.height).fill()
+        }
+        frame.layer?.render(in: context.cgContext)
+        if let rows, let image = rows.bitmapImageRepForCachingDisplay(in: rows.visibleRect) {
+            // The selection pill is glass as well and comes out solid black, so it is drawn by hand.
+            let table = rows as? NSTableView
+            let style = table?.selectionHighlightStyle ?? .regular
+            if let table, table.selectedRow >= 0 {
+                let row = table.convert(table.rect(ofRow: table.selectedRow), to: frame).insetBy(dx: 10, dy: 1)
+                NSColor(calibratedWhite: 0.87, alpha: 1).setFill()
+                NSBezierPath(roundedRect: row, xRadius: 8, yRadius: 8).fill()
+            }
+            table?.selectionHighlightStyle = .none
+            rows.cacheDisplay(in: rows.visibleRect, to: image)
+            table?.selectionHighlightStyle = style
+            image.draw(in: rows.convert(rows.visibleRect, to: frame), from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
+        }
+        NSGraphicsContext.restoreGraphicsState()
+        try? bitmap.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
+    }
+
+    private func sidebarRows(in view: NSView) -> NSView? {
+        for child in view.subviews where !child.isHidden {
+            if child is NSTableView, child.convert(child.bounds, to: nil).minX < 60 { return child }
+            if let found = sidebarRows(in: child) { return found }
+        }
+        return nil
+    }
+
     private func writeState(to path: String) {
         var state = panel.debugState()
         state["pasteboardText"] = pasteboard.string(forType: .string) ?? ""
@@ -180,6 +234,11 @@ final class DevDriver: NSObject {
         state.merge(bar.debugState()) { _, new in new }
         state["openedURLs"] = openedURLs
         state["axTrusted"] = PasteSimulator.isTrusted
+        state["windows"] = [
+            "panel": panel.debugWindow.windowNumber,
+            "main": workspace.debugWindowNumber("main"),
+            "settings": workspace.debugWindowNumber("settings"),
+        ]
         state["menuSize"] = menuSize.map { "\(Int($0.width))x\(Int($0.height))" } ?? ""
         guard let data = try? JSONSerialization.data(withJSONObject: state, options: [.sortedKeys]) else { return }
         try? data.write(to: URL(fileURLWithPath: path), options: .atomic)

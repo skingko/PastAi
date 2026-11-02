@@ -1,3 +1,4 @@
+import ClipCore
 import CryptoKit
 import Foundation
 
@@ -49,13 +50,13 @@ public struct ExtensionCatalog: Sendable {
     /// Downloads an entry into a temporary folder, verifying each file before anything can be installed.
     public func fetchExtension(_ entry: CatalogEntry) async throws -> URL {
         guard entry.files.contains(where: { $0.path == "extension.json" }) else {
-            throw ExtensionError.invalidManifest("索引缺少 extension.json")
+            throw ExtensionError.invalidManifest(L("索引缺少 extension.json"))
         }
         let folder = FileManager.default.temporaryDirectory.appending(path: "pastai-ext-\(UUID().uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         for file in entry.files {
             guard ExtensionValidator.isSafeRelativePath(file.path), ExtensionValidator.isSafeRelativePath(entry.folder) else {
-                throw ExtensionError.invalidManifest("文件路径不安全：\(file.path)")
+                throw ExtensionError.invalidManifest(L("文件路径不安全：\(file.path)"))
             }
             let data = try await download(baseURL.appending(path: entry.folder).appending(path: file.path))
             guard Self.sha256(data) == file.sha256 else { throw ExtensionError.integrityMismatch(file.path) }
@@ -78,7 +79,7 @@ public struct ExtensionCatalog: Sendable {
     private func decode(_ data: Data) throws -> CatalogIndex {
         let index = try JSONDecoder().decode(CatalogIndex.self, from: data)
         guard index.schema <= ExtensionManifest.currentSchema else {
-            throw ExtensionError.invalidManifest("市场需要更新版本的 PastAi")
+            throw ExtensionError.invalidManifest(L("市场需要更新版本的 PastAi"))
         }
         return index
     }
@@ -86,7 +87,7 @@ public struct ExtensionCatalog: Sendable {
     private func download(_ url: URL) async throws -> Data {
         let (data, response) = try await session.data(from: url)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw ExtensionError.invalidManifest("下载失败：\(url.lastPathComponent)")
+            throw ExtensionError.invalidManifest(L("下载失败：\(url.lastPathComponent)"))
         }
         return data
     }

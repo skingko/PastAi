@@ -67,6 +67,18 @@ public final class ExtensionLibrary {
         persistState()
     }
 
+    /// A new version of the app ships newer copies of its extensions, so fixes reach people offline too.
+    public func updateBundled(from bundled: URL) {
+        for item in installed where !item.manifest.isLocal {
+            let slug = item.manifest.id.replacingOccurrences(of: "io.github.skingko.pastai.", with: "")
+            let folder = bundled.appending(path: slug, directoryHint: .isDirectory)
+            guard let data = try? Data(contentsOf: folder.appending(path: "extension.json")),
+                  let shipped = try? JSONDecoder().decode(ExtensionManifest.self, from: data),
+                  ExtensionCatalog.isNewer(shipped.version, than: item.manifest.version) else { continue }
+            _ = try? install(fromDirectory: folder)
+        }
+    }
+
     // MARK: Install and remove
 
     /// Validates, then copies into place. Every source goes through here: market, bundle and agent.
@@ -77,7 +89,7 @@ public final class ExtensionLibrary {
         try ExtensionValidator.validate(manifest)
         for file in manifest.referencedFiles {
             guard FileManager.default.fileExists(atPath: source.appending(path: file).path) else {
-                throw ExtensionError.invalidManifest("缺少文件：\(file)")
+                throw ExtensionError.invalidManifest(L("缺少文件：\(file)"))
             }
         }
         let destination = directory(for: manifest.id)
@@ -105,10 +117,10 @@ public final class ExtensionLibrary {
         try encoder.encode(manifest).write(to: staging.appending(path: "extension.json"))
         if case .script(let file) = manifest.action {
             guard let script, script.utf8.count <= ExtensionValidator.maxScriptBytes else {
-                throw ExtensionError.invalidManifest("脚本为空或超过 256KB")
+                throw ExtensionError.invalidManifest(L("脚本为空或超过 256KB"))
             }
             guard ExtensionValidator.isSafeRelativePath(file) else {
-                throw ExtensionError.invalidManifest("文件路径不安全：\(file)")
+                throw ExtensionError.invalidManifest(L("文件路径不安全：\(file)"))
             }
             try script.write(to: staging.appending(path: file), atomically: true, encoding: .utf8)
         }
@@ -146,7 +158,7 @@ public final class ExtensionLibrary {
     public func optionValues(for id: String) -> [String: String] {
         var values: [String: String] = [:]
         for option in extensionItem(id: id)?.manifest.options ?? [] {
-            if let fallback = option.defaultValue { values[option.id] = fallback }
+            if let fallback = option.resolvedDefault { values[option.id] = fallback }
         }
         return values.merging(state.options[id] ?? [:]) { _, stored in stored }
     }

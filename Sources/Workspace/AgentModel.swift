@@ -74,7 +74,7 @@ final class AgentModel {
 
     var isConfigured: Bool { settings.mainModel != nil && settings.provider(for: settings.mainModel) != nil }
 
-    var modelLabel: String { settings.mainModel?.model ?? "未配置模型" }
+    var modelLabel: String { settings.mainModel?.model ?? L("未配置模型") }
 
     var availableModels: [ModelRef] {
         settings.providers.flatMap { provider in provider.models.map { ModelRef(providerID: provider.id, model: $0) } }
@@ -130,7 +130,7 @@ final class AgentModel {
                 if !message.text.isEmpty { items.append(.assistant(id: UUID(), text: message.text)) }
             case .tool:
                 items.append(.tool(
-                    id: UUID(), callID: message.toolCallID ?? "", name: message.toolName ?? "工具", summary: "",
+                    id: UUID(), callID: message.toolCallID ?? "", name: message.toolName ?? L("工具"), summary: "",
                     preview: String(message.text.prefix(240)), state: message.isError ? .failed : .succeeded
                 ))
             }
@@ -154,7 +154,7 @@ final class AgentModel {
             }
             attachments.append(contentsOf: added)
             if hidden > 0 {
-                items.append(.note(id: UUID(), text: "\(hidden) 项对 AI 隐藏，未附加。"))
+                items.append(.note(id: UUID(), text: L("\(hidden) 项对 AI 隐藏，未附加。")))
             }
         }
     }
@@ -190,7 +190,7 @@ final class AgentModel {
     private func start(text: String, attached: [Clip]) {
         var shown = text
         if !attached.isEmpty {
-            shown += "\n（附带 \(attached.count) 个条目）"
+            shown += L("\n（附带 \(attached.count) 个条目）")
         }
         items.append(.user(id: UUID(), text: shown))
         revision += 1
@@ -218,10 +218,10 @@ final class AgentModel {
         let supportsVision = settings.provider(for: main)?.supportsVision ?? false
 
         isRunning = true
-        status = "思考中"
+        status = L("思考中")
 
         let approvals = gate ?? ApprovalGate { [weak self] proposal in
-            await self?.requestApproval(proposal) ?? .rejected(reason: "应用已关闭")
+            await self?.requestApproval(proposal) ?? .rejected(reason: "the app was closed")
         }
         gate = approvals
 
@@ -250,17 +250,17 @@ final class AgentModel {
     private func makeInput(text: String, displayText: String, attached: [Clip]) async -> LLMMessage {
         let now = Date().formatted(.dateTime.year().month().day().weekday().hour().minute())
         let visible = (try? await service.count(ClipQuery(), scope: .agent)) ?? 0
-        var context = "[当前时间：\(now)；资料库可访问条目：\(visible)]"
+        var context = "[Current time: \(now). Accessible clips: \(visible)]"
         if !attached.isEmpty {
-            let list = attached.map { "\($0.id)（\($0.kind.displayName)：\($0.displayTitle.prefix(30))）" }.joined(separator: "，")
-            context += "\n[用户选中的条目：\(list)]"
+            let list = attached.map { "\($0.id) (\($0.kind.rawValue): \($0.displayTitle.prefix(30)))" }.joined(separator: ", ")
+            context += "\n[Clips the user selected: \(list)]"
         }
         return LLMMessage(role: .user, text: "\(context)\n\n\(text)", displayText: displayText)
     }
 
     private func ensureSession(title: String) async {
         guard currentSessionID == nil else { return }
-        currentSessionID = try? await service.createAgentSession(title: String(title.prefix(24)))
+        currentSessionID = try? await service.createAgentSession(title: String(title.prefix(80)))
         refreshSessions()
     }
 
@@ -279,7 +279,7 @@ final class AgentModel {
                 items.append(row)
             }
         case .toolFinished(let id, _, let preview, let isError):
-            status = "思考中"
+            status = L("思考中")
             finishTool(callID: id, preview: preview, isError: isError)
         case .progress(let message):
             status = message
@@ -338,7 +338,7 @@ final class AgentModel {
     func stop() {
         run?.cancel()
         for (_, continuation) in pendingApprovals {
-            continuation.resume(returning: .rejected(reason: "用户已停止"))
+            continuation.resume(returning: .rejected(reason: "the user stopped the run"))
         }
         pendingApprovals = [:]
         markPendingProposals(.rejected)
@@ -351,14 +351,14 @@ final class AgentModel {
             pendingApprovals[proposal.id] = continuation
             items.append(.proposal(id: UUID(), proposal: proposal, state: .pending))
             revision += 1
-            status = "等待你确认"
+            status = L("等待你确认")
         }
     }
 
     func resolve(_ proposal: ChangeProposal, decision: ApprovalDecision) {
         guard let continuation = pendingApprovals.removeValue(forKey: proposal.id) else { return }
         update(proposalID: proposal.id, state: decision == .rejected(reason: nil) ? .rejected : .approved)
-        status = "处理中"
+        status = L("处理中")
         continuation.resume(returning: decision)
     }
 
@@ -390,33 +390,35 @@ final class AgentModel {
     }
 
     private func copy(_ id: Int64) async -> Bool {
-        guard let detail = try? await service.detail(id: id, scope: .agent) else { return false }
-        return ((try? writer.write([detail], mode: .original)) ?? 0) > 0
+        guard let detail = try? await service.detail(id: id, scope: .agent),
+              ((try? writer.write([detail], mode: .original)) ?? 0) > 0 else { return false }
+        try? await service.recordUse(clipID: id)
+        return true
     }
 
     static func toolTitle(_ name: String) -> String {
         switch name {
-        case "search_clips": "搜索剪贴板"
-        case "get_clips": "读取条目"
-        case "list_pinboards": "查看 Pinboard"
-        case "list_tags": "查看标签"
-        case "stats": "查看统计"
-        case "find_duplicates": "查找重复项"
-        case "view_media": "查看媒体"
-        case "set_titles": "设置标题"
-        case "set_tags": "设置标签"
-        case "create_clip": "新建条目"
-        case "create_pinboard": "新建 Pinboard"
-        case "move_to_pinboard": "移动到 Pinboard"
-        case "merge_clips": "合并条目"
-        case "copy_to_clipboard": "放到剪贴板"
-        case "bulk_process": "批量处理"
-        case "edit_clip": "修改条目"
-        case "delete_clips": "删除条目"
-        case "list_extensions": "查看组件"
-        case "test_extension": "试运行组件"
-        case "create_extension": "安装组件"
-        case "delete_extension": "删除组件"
+        case "search_clips": L("搜索剪贴板")
+        case "get_clips": L("读取条目")
+        case "list_pinboards": L("查看 Pinboard")
+        case "list_tags": L("查看标签")
+        case "stats": L("查看统计")
+        case "find_duplicates": L("查找重复项")
+        case "view_media": L("查看媒体")
+        case "set_titles": L("设置标题")
+        case "set_tags": L("设置标签")
+        case "create_clip": L("新建条目")
+        case "create_pinboard": L("新建 Pinboard")
+        case "move_to_pinboard": L("移动到 Pinboard")
+        case "merge_clips": L("合并条目")
+        case "copy_to_clipboard": L("放到剪贴板")
+        case "bulk_process": L("批量处理")
+        case "edit_clip": L("修改条目")
+        case "delete_clips": L("删除条目")
+        case "list_extensions": L("查看组件")
+        case "test_extension": L("试运行组件")
+        case "create_extension": L("安装组件")
+        case "delete_extension": L("删除组件")
         default: name
         }
     }

@@ -2,6 +2,15 @@ import AppKit
 import ApplicationServices
 import Carbon.HIToolbox
 
+/// A clip points at files that are no longer where they were, so nothing reached the pasteboard.
+public struct MissingFilesError: Error, Equatable, LocalizedError {
+    public let names: [String]
+
+    public var errorDescription: String? {
+        names.count == 1 ? L("“\(names[0])”已不在原来的位置，无法粘贴") : L("\(names.count) 个文件已不在原来的位置，无法粘贴")
+    }
+}
+
 @MainActor
 public final class PasteWriter {
     /// Tags our own writes so the monitor does not record pastes as new copies.
@@ -22,8 +31,13 @@ public final class PasteWriter {
 
     /// Writes clips to the pasteboard and returns how many could be written. Multiple text clips are
     /// joined so a single paste delivers all of them; a mixed selection pastes as one item per clip.
+    /// Throws `MissingFilesError` rather than quietly pasting only the files that remain.
     @discardableResult
     public func write(_ details: [ClipDetail], mode: Mode) throws -> Int {
+        if mode == .original {
+            let missing = details.flatMap(\.files).filter { service.resolveURL(for: $0) == nil }
+            guard missing.isEmpty else { throw MissingFilesError(names: missing.map(\.fileName)) }
+        }
         let items: [NSPasteboardItem]
         if details.count > 1, details.allSatisfy({ $0.clip.kind.isTextual }) {
             let joined = details.compactMap(\.clip.plainText).joined(separator: "\n")

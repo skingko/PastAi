@@ -1,3 +1,4 @@
+import ClipCore
 import Foundation
 
 /// Fills `{text}`, `{text.raw}` and `{option.<id>}` placeholders.
@@ -66,31 +67,31 @@ public enum ExtensionValidator {
         func reject(_ reason: String) throws -> Never { throw ExtensionError.invalidManifest(reason) }
 
         if let schema = manifest.schema, schema > ExtensionManifest.currentSchema {
-            try reject("需要更新版本的 PastAi（schema \(schema)）")
+            try reject(L("需要更新版本的 PastAi（schema \(schema)）"))
         }
         guard manifest.id.range(of: #"^[a-z0-9]+(\.[a-z0-9-]+)+$"#, options: .regularExpression) != nil else {
-            try reject("id 只能使用小写字母、数字、点和连字符，例如 local.my-tool")
+            try reject(L("id 只能使用小写字母、数字、点和连字符，例如 local.my-tool"))
         }
-        guard !manifest.name.en.trimmingCharacters(in: .whitespaces).isEmpty else { try reject("name 不能为空") }
+        guard !manifest.name.en.trimmingCharacters(in: .whitespaces).isEmpty else { try reject(L("name 不能为空")) }
         guard manifest.version.range(of: #"^\d+\.\d+\.\d+$"#, options: .regularExpression) != nil else {
-            try reject("version 必须是 1.0.0 这样的格式")
+            try reject(L("version 必须是 1.0.0 这样的格式"))
         }
         try validateIcon(manifest.icon)
 
         for file in manifest.referencedFiles where !isSafeRelativePath(file) {
-            try reject("文件路径不安全：\(file)")
+            try reject(L("文件路径不安全：\(file)"))
         }
         if let pattern = manifest.match?.regex, (try? NSRegularExpression(pattern: pattern)) == nil {
-            try reject("match.regex 不是合法的正则表达式")
+            try reject(L("match.regex 不是合法的正则表达式"))
         }
 
         var optionIDs = Set<String>()
         for option in manifest.options ?? [] {
             guard option.id.range(of: #"^[A-Za-z0-9_]+$"#, options: .regularExpression) != nil else {
-                try reject("选项 id 无效：\(option.id)")
+                try reject(L("选项 id 无效：\(option.id)"))
             }
-            guard optionIDs.insert(option.id).inserted else { try reject("选项 id 重复：\(option.id)") }
-            if option.type == .choice, option.choices?.isEmpty ?? true { try reject("选项 \(option.id) 缺少 choices") }
+            guard optionIDs.insert(option.id).inserted else { try reject(L("选项 id 重复：\(option.id)")) }
+            if option.type == .choice, option.choices?.isEmpty ?? true { try reject(L("选项 \(option.id) 缺少 choices")) }
         }
 
         switch manifest.action {
@@ -99,14 +100,14 @@ public enum ExtensionValidator {
                 try validateTemplate(candidate, optionIDs: optionIDs)
             }
             if let returnKeyOption, !optionIDs.contains(returnKeyOption) {
-                try reject("returnKeyOption 引用了不存在的选项：\(returnKeyOption)")
+                try reject(L("returnKeyOption 引用了不存在的选项：\(returnKeyOption)"))
             }
         case .app(let bundleID, _):
-            guard bundleID.contains(".") else { try reject("bundleID 无效") }
+            guard bundleID.contains(".") else { try reject(L("bundleID 无效")) }
         case .ai(_, let prompt):
-            guard prompt.contains("{text}") else { try reject("AI 提示词必须包含 {text}") }
+            guard prompt.contains("{text}") else { try reject(L("AI 提示词必须包含 {text}")) }
             for id in TemplateRenderer.referencedOptions(in: prompt) where !optionIDs.contains(id) {
-                try reject("提示词引用了不存在的选项：\(id)")
+                try reject(L("提示词引用了不存在的选项：\(id)"))
             }
         case .copy, .paste, .script:
             break
@@ -115,7 +116,7 @@ public enum ExtensionValidator {
 
     private static func validateTemplate(_ template: String, optionIDs: Set<String>) throws {
         for id in TemplateRenderer.referencedOptions(in: template) where !optionIDs.contains(id) {
-            throw ExtensionError.invalidManifest("地址引用了不存在的选项：\(id)")
+            throw ExtensionError.invalidManifest(L("地址引用了不存在的选项：\(id)"))
         }
         let sample = Dictionary(uniqueKeysWithValues: optionIDs.map { ($0, "sample") })
         let text = template.hasPrefix("{text.raw}") ? "https://example.com" : "sample"
@@ -125,13 +126,13 @@ public enum ExtensionValidator {
     private static func validateIcon(_ icon: String) throws {
         let parts = icon.split(separator: ":", maxSplits: 1).map(String.init)
         guard parts.count == 2, ["symbol", "text", "file"].contains(parts[0]), !parts[1].isEmpty else {
-            throw ExtensionError.invalidManifest("icon 必须是 symbol:、text: 或 file: 开头")
+            throw ExtensionError.invalidManifest(L("icon 必须是 symbol:、text: 或 file: 开头"))
         }
         if parts[0] == "text", parts[1].count > 2 {
-            throw ExtensionError.invalidManifest("text 图标最多 2 个字符")
+            throw ExtensionError.invalidManifest(L("text 图标最多 2 个字符"))
         }
         if parts[0] == "symbol", parts[1].count > symbolOrTextLimit {
-            throw ExtensionError.invalidManifest("symbol 名称过长")
+            throw ExtensionError.invalidManifest(L("symbol 名称过长"))
         }
     }
 
@@ -143,12 +144,12 @@ public enum ExtensionValidator {
     /// A short description of what an extension will do, shown before it is installed.
     public static func describe(_ action: ExtensionAction) -> String {
         switch action {
-        case .url(let template, _, _): "打开地址：\(template)"
-        case .app(let bundleID, let copyFirst): copyFirst ? "拷贝文本并打开 \(bundleID)" : "打开 \(bundleID)"
-        case .copy: "拷贝选中内容"
-        case .paste: "用剪贴板内容替换选中内容"
-        case .script: "在沙箱里运行脚本（不能联网，不能读写文件）"
-        case .ai(_, let prompt): "把选中内容发给你配置的 AI 模型：\(prompt.prefix(120))"
+        case .url(let template, _, _): L("打开地址：\(template)")
+        case .app(let bundleID, let copyFirst): copyFirst ? L("拷贝文本并打开 \(bundleID)") : L("打开 \(bundleID)")
+        case .copy: L("拷贝选中内容")
+        case .paste: L("用剪贴板内容替换选中内容")
+        case .script: L("在沙箱里运行脚本（不能联网，不能读写文件）")
+        case .ai(_, let prompt): L("把选中内容发给你配置的 AI 模型：\(prompt.prefix(120))")
         }
     }
 }

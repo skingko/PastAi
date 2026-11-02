@@ -15,7 +15,7 @@ Clipboard history for every format, a PopClip-style toolbar on any selected text
 ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-![PastAi clipboard panel](docs/images/panel.png)
+![PastAi clipboard panel](docs/images/en/panel.png)
 
 </div>
 
@@ -31,6 +31,7 @@ PastAi is an open-source, native Mac clipboard manager in the spirit of Paste, w
 | **AI agent** | Bring your own model to search, tag, merge, rewrite and clean up your library |
 | **Fast search** | Full-text search with proper Chinese support, plus OCR text inside images |
 | **Private by design** | Local storage, per-board AI visibility, and approval before the agent changes anything |
+| **English and Chinese** | Follows your system language, including extensions |
 
 ## Download
 
@@ -63,11 +64,19 @@ Press `⇧⌘V` and the panel slides up from the bottom of the screen, over the 
 
 **Pinboards** keep what matters: they never expire. You can also pin built-in categories such as Images or Links as tabs in Settings. Copies from password managers are skipped, and you can exclude any app.
 
+The clip you just used moves to the first card, so whatever you reach for stays one keystroke away.
+
+**Files stay where they are.** Copy a file or a whole folder and PastAi records its path instead of a copy, so your library stays small however large the files are. Pasting uses the original, and PastAi tells you if it has been moved or deleted. Screenshots are the exception: there may be no other copy, so PastAi keeps one.
+
+### Moving from Paste
+
+Open **Settings > Storage** and choose **Import**. PastAi reads Paste's library without changing it and brings over your history, Pinboards, titles, source apps and original dates. Anything a password manager marks as secret stays behind, and a Pinboard with a name like Passwords is hidden from AI. Importing again never creates duplicates. Imported history follows your retention setting, counted from the day you import.
+
 ## Selection toolbar
 
 Select text in any app, by dragging or double-clicking, and a toolbar appears at your cursor.
 
-![Selection toolbar](docs/images/selection-bar.png)
+![Selection toolbar](docs/images/en/selection-bar.png)
 
 Four extensions are on by default:
 
@@ -76,7 +85,7 @@ Four extensions are on by default:
 - **Google** searches the web.
 - **WhatsApp** sends the selection to a contact you choose, and can press send for you.
 
-![Translate popover](docs/images/translate.png)
+![Translate popover](docs/images/en/translate.png)
 
 The toolbar never takes focus, which is why Insert can replace your selection directly. Extensions only appear when they apply: Open Link only shows for a URL, and Paste only in editable text.
 
@@ -84,7 +93,7 @@ The toolbar never takes focus, which is why Insert can replace your selection di
 
 Open **Settings > Extensions** to reorder the toolbar, configure each extension and browse the market. The market is the [`extensions`](extensions) folder of this repository, fetched straight from GitHub, with a copy inside the app so it works offline.
 
-![Extension settings](docs/images/extensions.png)
+![Extension settings](docs/images/en/extensions.png)
 
 | Category | Extensions |
 |---|---|
@@ -101,7 +110,7 @@ There is deliberately no shell or AppleScript action. Extensions are downloaded 
 
 ## AI agent
 
-![Main window with the agent](docs/images/workspace.png)
+![Main window with the agent](docs/images/en/workspace.png)
 
 Open the main window and ask for what you want:
 
@@ -149,6 +158,7 @@ Sources/
   ClipCore/          Capture, storage, search, paste. No UI, no AI
   ClipEnrich/        Thumbnails, media metadata, OCR
   ClipExtensions/    Manifests, validation, JavaScript sandbox, market
+  ClipImport/        Importing from Paste
   QuickPanel/        The clipboard panel
   SelectionBar/      The selection toolbar and result popover
   ClipAgent/         Model clients, tools, approvals, agent loop

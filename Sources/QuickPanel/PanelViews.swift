@@ -13,10 +13,28 @@ struct PanelRootView: View {
                 FilterBar(model: model)
             }
             ClipStrip(model: model)
+                .overlay(alignment: .top) {
+                    if let notice = model.notice { NoticeBanner(text: notice) }
+                }
         }
         .padding(.horizontal, 16)
         .padding(.top, 12)
         .padding(.bottom, 14)
+    }
+}
+
+private struct NoticeBanner: View {
+    var text: String
+
+    var body: some View {
+        Label(text, systemImage: "exclamationmark.triangle.fill")
+            .symbolRenderingMode(.multicolor)
+            .font(.system(size: 13, weight: .medium))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(.regularMaterial, in: Capsule())
+            .shadow(color: .black.opacity(0.18), radius: 8, y: 2)
+            .padding(.top, 8)
     }
 }
 
@@ -43,12 +61,12 @@ private struct PanelHeader: View {
 
     private var tabs: some View {
         HStack(spacing: 4) {
-            TabButton(title: "剪贴板", isSelected: model.tab == .history, leading: AnyView(Image(systemName: "clock.arrow.circlepath"))) {
+            TabButton(title: L("剪贴板"), isSelected: model.tab == .history, leading: AnyView(Image(systemName: "clock.arrow.circlepath"))) {
                 model.tab = .history
             }
             ForEach(model.settings.pinnedKinds) { kind in
                 TabButton(
-                    title: kind.displayName,
+                    title: kind.categoryName,
                     isSelected: model.tab == .kind(kind),
                     leading: AnyView(Image(systemName: kind.symbolName).foregroundStyle(kind.tint))
                 ) {
@@ -64,7 +82,7 @@ private struct PanelHeader: View {
                 Image(systemName: "plus").font(.system(size: 14, weight: .medium)).frame(width: 28, height: 28)
             }
             .buttonStyle(.plain)
-            .help("新建 Pinboard")
+            .help(L("新建 Pinboard"))
             .popover(isPresented: $isCreatingBoard, arrowEdge: .top) {
                 PinboardForm(initialName: "", initialColor: Pinboard.palette[model.pinboards.count % Pinboard.palette.count]) { name, color in
                     model.createPinboard(name: name, colorHex: color)
@@ -84,18 +102,18 @@ private struct PanelHeader: View {
                 .frame(width: 28, height: 28)
         }
         .buttonStyle(.plain)
-        .help("筛选 (⌘F)")
+        .help(L("筛选 (⌘F)"))
     }
 
     private var moreMenu: some View {
         Menu {
-            Button("打开主窗口") { model.actions.openMainWindow() }
-            Button("新建文本") { model.actions.newText() }
+            Button(L("打开主窗口")) { model.actions.openMainWindow() }
+            Button(L("新建文本")) { model.actions.newText() }
             Divider()
-            Button(model.settings.isPaused ? "继续记录" : "暂停记录") { model.settings.togglePause() }
-            Button("设置…") { model.actions.openSettings() }
+            Button(model.settings.isPaused ? L("继续记录") : L("暂停记录")) { model.settings.togglePause() }
+            Button(L("设置…")) { model.actions.openSettings() }
             Divider()
-            Button("退出 PastAi") { model.actions.quit() }
+            Button(L("退出 PastAi")) { model.actions.quit() }
         } label: {
             Image(systemName: model.settings.isPaused ? "pause.circle.fill" : "ellipsis.circle")
                 .font(.system(size: 15))
@@ -114,7 +132,7 @@ private struct SearchPill: View {
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-            PanelSearchField(text: $model.query, placeholder: "搜索")
+            PanelSearchField(text: $model.query, placeholder: L("搜索"))
                 .frame(height: 18)
             if !model.query.isEmpty {
                 Button {
@@ -272,7 +290,7 @@ private struct PinboardForm: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            TextField("名称", text: $name)
+            TextField(L("名称"), text: $name)
                 .textFieldStyle(.roundedBorder)
                 .onSubmit { submit() }
             HStack(spacing: 8) {
@@ -288,7 +306,7 @@ private struct PinboardForm: View {
             }
             HStack {
                 Spacer()
-                Button("完成") { submit() }
+                Button(L("完成")) { submit() }
                     .keyboardShortcut(.defaultAction)
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
             }
@@ -309,36 +327,36 @@ private struct FilterBar: View {
     var body: some View {
         HStack(spacing: 6) {
             ForEach(ClipKind.allCases) { kind in
-                Chip(title: kind.displayName, symbol: kind.symbolName, isOn: model.kindFilter == kind) {
+                Chip(title: kind.categoryName, symbol: kind.symbolName, isOn: model.kindFilter == kind) {
                     model.kindFilter = model.kindFilter == kind ? nil : kind
                 }
             }
             Divider().frame(height: 16)
             Menu {
-                Button("全部来源") { model.sourceFilter = nil }
+                Button(L("全部来源")) { model.sourceFilter = nil }
                 ForEach(model.sources) { source in
                     Button("\(source.name) (\(source.count))") { model.sourceFilter = source }
                 }
             } label: {
-                Text(model.sourceFilter?.name ?? "来源").font(.system(size: 12))
+                Text(model.sourceFilter?.name ?? L("来源")).font(.system(size: 12))
             }
             .menuStyle(.button)
             .buttonStyle(.plain)
             .fixedSize()
             Menu {
-                Button("全部时间") { model.dateFilter = nil }
+                Button(L("全部时间")) { model.dateFilter = nil }
                 ForEach(DateFilter.allCases) { filter in
                     Button(filter.label) { model.dateFilter = filter }
                 }
             } label: {
-                Text(model.dateFilter?.label ?? "时间").font(.system(size: 12))
+                Text(model.dateFilter?.label ?? L("时间")).font(.system(size: 12))
             }
             .menuStyle(.button)
             .buttonStyle(.plain)
             .fixedSize()
             Spacer()
             if model.hasActiveFilters {
-                Button("清除筛选") {
+                Button(L("清除筛选")) {
                     model.kindFilter = nil
                     model.sourceFilter = nil
                     model.dateFilter = nil
@@ -378,9 +396,9 @@ private struct ClipStrip: View {
         Group {
             if model.clips.isEmpty {
                 ContentUnavailableView(
-                    model.isSearching ? "没有匹配的内容" : "这里还是空的",
+                    model.isSearching ? L("没有匹配的内容") : L("这里还是空的"),
                     systemImage: model.isSearching ? "magnifyingglass" : "doc.on.clipboard",
-                    description: Text(model.isSearching ? "换个关键词或清除筛选" : "复制任何内容，它都会出现在这里")
+                    description: Text(model.isSearching ? L("换个关键词或清除筛选") : L("复制任何内容，它都会出现在这里"))
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {

@@ -1,3 +1,4 @@
+import ClipCore
 import Foundation
 import Testing
 @testable import ClipExtensions
@@ -308,8 +309,45 @@ private func temporaryFolder() throws -> URL {
         #expect(try ScriptEngine.evaluate(source: change, input: ScriptInput(text: "HELLO")).replace == "hello")
 
         let count = try String(contentsOf: Self.root.appending(path: "word-count/script.js"), encoding: .utf8)
-        let shown = try ScriptEngine.evaluate(source: count, input: ScriptInput(text: "你好 world\n第二行")).show
+        let shown = try ScriptEngine.evaluate(source: count, input: ScriptInput(text: "你好 world\n第二行", language: "zh")).show
         #expect(shown == "字符 12\n字词 6\n行数 2")
+        let english = try ScriptEngine.evaluate(source: count, input: ScriptInput(text: "one two", language: "en")).show
+        #expect(english == "Characters 7\nWords 2\nLines 1")
+    }
+
+    @Test func translateAimsAtTheLanguageOfTheMac() throws {
+        let entry = try #require(try catalog().extensions.first { $0.folder == "translate" })
+        let options = try manifest(entry).options ?? []
+        let language = try #require(options.first { $0.id == "language" })
+        let fallback = try #require(options.first { $0.id == "fallback" })
+        #expect(language.resolvedDefault == AppLanguage.current.nativeName)
+        #expect(fallback.resolvedDefault == AppLanguage.current.secondary.nativeName)
+        #expect(language.choices?.map(\.value).contains(language.resolvedDefault ?? "") == true)
+        #expect(fallback.choices?.map(\.value).contains(fallback.resolvedDefault ?? "") == true)
+        #expect(language.resolvedDefault != fallback.resolvedDefault)
+    }
+
+    @MainActor @Test func aNewAppVersionUpdatesTheExtensionsItShips() throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: "pastai-bundled-\(UUID().uuidString)", directoryHint: .isDirectory)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let library = ExtensionLibrary(root: root.appending(path: "installed", directoryHint: .isDirectory))
+        func ship(_ version: String) throws -> URL {
+            let bundled = root.appending(path: "bundle-\(version)", directoryHint: .isDirectory)
+            let folder = bundled.appending(path: "sample", directoryHint: .isDirectory)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            var definition = sample(action: .copy)
+            definition.id = "io.github.skingko.pastai.sample"
+            definition.version = version
+            try JSONEncoder().encode(definition).write(to: folder.appending(path: "extension.json"))
+            return bundled
+        }
+        try library.install(fromDirectory: try ship("1.0.0").appending(path: "sample"))
+
+        library.updateBundled(from: try ship("1.0.1"))
+        #expect(library.extensionItem(id: "io.github.skingko.pastai.sample")?.manifest.version == "1.0.1")
+
+        library.updateBundled(from: try ship("1.0.0"))
+        #expect(library.extensionItem(id: "io.github.skingko.pastai.sample")?.manifest.version == "1.0.1")
     }
 
     @Test func translationPromptFencesTheSelection() throws {

@@ -27,10 +27,14 @@ public actor EnrichmentPipeline {
         startWorkerIfNeeded()
     }
 
-    /// Catches up on clips captured while a previous run was interrupted.
+    /// Catches up on clips captured while a previous run was interrupted, and on imports, page by page.
     public func backfill() async {
-        let pending = (try? await service.pendingEnrichment(limit: 500)) ?? []
-        pending.forEach(enqueue)
+        var previous: [Int64] = []
+        while let pending = try? await service.pendingEnrichment(limit: 500), !pending.isEmpty, pending != previous {
+            pending.forEach(enqueue)
+            await drain()
+            previous = pending
+        }
     }
 
     /// Waits for the queue to empty. Used by tests.

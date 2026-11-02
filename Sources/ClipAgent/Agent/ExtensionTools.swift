@@ -1,3 +1,4 @@
+import ClipCore
 import ClipExtensions
 import Foundation
 
@@ -41,39 +42,39 @@ public struct ExtensionAccess: Sendable {
 
 enum ExtensionTools {
     private static let definition: [String: JSONValue] = [
-        "id": Schema.string("短名称，只用小写字母、数字和连字符，例如 markdown-link。实际 id 为 local.<短名称>，已存在时覆盖更新"),
-        "name": Schema.string("显示名称"),
-        "name_zh": Schema.string("中文显示名称"),
-        "description": Schema.string("一句话说明"),
-        "icon": Schema.string("图标：symbol:<SF Symbol 名称>，或 text:<1 到 2 个字符>"),
+        "id": Schema.string("Short name using lowercase letters, digits and hyphens, such as markdown-link. The real id is local.<short name>, and an existing one is updated"),
+        "name": Schema.string("Display name"),
+        "name_zh": Schema.string("Display name in Chinese"),
+        "description": Schema.string("One-sentence description"),
+        "icon": Schema.string("Icon: symbol:<SF Symbol name> or text:<1 or 2 characters>"),
         "match": [
             "type": "object",
-            "description": "可选的显示条件：regex（正则，匹配时才显示）、minLength、maxLength、requiresEditable（只在可编辑文本中显示）",
+            "description": "Optional conditions for showing it: regex (shown only on a match), minLength, maxLength, requiresEditable (shown only in editable text)",
         ],
         "options": [
             "type": "array",
-            "description": "可选的用户设置项，每项含 id、type（string、boolean、choice）、label、defaultValue、required、choices",
+            "description": "Optional user settings, each with id, type (string, boolean, choice), label, defaultValue, required, choices",
             "items": ["type": "object"],
         ],
         "action": [
             "type": "object",
             "description": """
-            动作，type 取值：
-            url：{"type":"url","url":"https://x.com/s?q={text}","fallbackURL":"可选"}。{text} 自动编码，{option.<id>} 引用设置项，也可用 app 的 URL Scheme。
-            app：{"type":"app","bundleID":"com.foo.bar","copyFirst":true}。拷贝文本后打开 app。
-            copy：拷贝。paste：用剪贴板替换选区。
-            script：{"type":"script"}，配合 script 参数。
-            ai：{"type":"ai","system":"可选","prompt":"...{text}..."}。调用用户的模型并在小弹窗显示，提示词必须包含 {text}。
-            不支持 Shell 和 AppleScript。
+            The action. type is one of:
+            url: {"type":"url","url":"https://x.com/s?q={text}","fallbackURL":"optional"}. {text} is encoded automatically, {option.<id>} reads a setting, and app URL schemes work too.
+            app: {"type":"app","bundleID":"com.foo.bar","copyFirst":true}. Copies the text, then opens the app.
+            copy: copies. paste: replaces the selection with the clipboard.
+            script: {"type":"script"}, together with the script argument.
+            ai: {"type":"ai","system":"optional","prompt":"...{text}..."}. Calls the user's model and shows the result in a small popover. The prompt must contain {text}.
+            Shell and AppleScript are not supported.
             """,
         ],
-        "script": Schema.string("action.type 为 script 时的 JavaScript。定义 function run(input)，input 含 text 和 options；返回字符串表示替换选区，或返回对象 {replace, copy, show, open}。脚本没有网络和文件访问能力"),
+        "script": Schema.string("JavaScript for action.type script. Define function run(input), where input has text, options and language (en or zh). Return a string to replace the selection, or an object {replace, copy, show, open}. Scripts have no network or file access"),
     ]
 
     private static let required = ["id", "name", "description", "icon", "action"]
 
     static let list = AgentTool(
-        spec: LLMToolSpec(name: "list_extensions", description: "列出已安装的浮条组件，包括是否启用、是否本地自定义。", parameters: Schema.object([:])),
+        spec: LLMToolSpec(name: "list_extensions", description: "List installed toolbar extensions, including whether each is enabled and whether it is a local one.", parameters: Schema.object([:])),
         risk: .read
     ) { _, environment in
         let items = try await access(environment).list()
@@ -88,9 +89,9 @@ enum ExtensionTools {
     static let test = AgentTool(
         spec: LLMToolSpec(
             name: "test_extension",
-            description: "验证组件定义并用样例文本试运行，不会安装，也不会打开任何东西。安装前先用它确认结果符合预期。",
+            description: "Validate an extension and try it on sample text, without installing it or opening anything. Use this before installing to confirm the result.",
             parameters: Schema.object(
-                definition.merging(["sample_text": Schema.string("用来试运行的样例文本")]) { _, new in new },
+                definition.merging(["sample_text": Schema.string("Sample text to try it on")]) { _, new in new },
                 required: required + ["sample_text"]
             )
         ),
@@ -98,7 +99,7 @@ enum ExtensionTools {
     ) { arguments, environment in
         let manifest = try manifest(from: arguments)
         let sample = try text(arguments, "sample_text")
-        let options = (manifest.options ?? []).reduce(into: [String: String]()) { $0[$1.id] = $1.defaultValue ?? "" }
+        let options = (manifest.options ?? []).reduce(into: [String: String]()) { $0[$1.id] = $1.resolvedDefault ?? "" }
         switch manifest.action {
         case .url(let template, _, _):
             return Render.ok(["valid": true, "would_open": .string(try TemplateRenderer.url(template, text: sample, options: options).absoluteString)])
@@ -124,7 +125,7 @@ enum ExtensionTools {
     static let create = AgentTool(
         spec: LLMToolSpec(
             name: "create_extension",
-            description: "安装或更新一个本地浮条组件，用户确认后会立即出现在选中文本浮条上。",
+            description: "Install or update a local toolbar extension. Once the user approves, it appears on the selected-text toolbar right away.",
             parameters: Schema.object(definition, required: required)
         ),
         risk: .destructive
@@ -134,8 +135,8 @@ enum ExtensionTools {
         if case .script = manifest.action { script = try text(arguments, "script") }
 
         var items = [ChangeItem(label: manifest.name.localized, after: ExtensionValidator.describe(manifest.action))]
-        if let script { items.append(ChangeItem(label: "脚本内容", after: String(script.prefix(1_500)))) }
-        let proposal = ChangeProposal(toolName: "create_extension", summary: "安装组件「\(manifest.name.localized)」", risk: .destructive, items: items)
+        if let script { items.append(ChangeItem(label: L("脚本内容"), after: String(script.prefix(1_500)))) }
+        let proposal = ChangeProposal(toolName: "create_extension", summary: L("安装组件「\(manifest.name.localized)」"), risk: .destructive, items: items)
         if case .rejected(let reason) = await environment.context.approvals.review(proposal) {
             return Render.rejected(reason)
         }
@@ -146,16 +147,16 @@ enum ExtensionTools {
     static let delete = AgentTool(
         spec: LLMToolSpec(
             name: "delete_extension",
-            description: "删除一个本地自定义组件。市场组件不能用这个工具删除。",
-            parameters: Schema.object(["id": Schema.string("组件 id，以 local. 开头")], required: ["id"])
+            description: "Delete a local extension. Market extensions cannot be deleted with this tool.",
+            parameters: Schema.object(["id": Schema.string("Extension id, starting with local.")], required: ["id"])
         ),
         risk: .destructive
     ) { arguments, environment in
         let id = try text(arguments, "id")
         guard id.hasPrefix(ExtensionManifest.localPrefix) else { throw ExtensionError.notLocal(id) }
         let items = try await access(environment).list()
-        guard let item = items.first(where: { $0.id == id }) else { throw AgentToolError.badArguments("没有这个组件：\(id)") }
-        let proposal = ChangeProposal(toolName: "delete_extension", summary: "删除组件「\(item.name)」", risk: .destructive, items: [ChangeItem(label: item.name, before: item.summary)])
+        guard let item = items.first(where: { $0.id == id }) else { throw AgentToolError.badArguments("No such extension: \(id)") }
+        let proposal = ChangeProposal(toolName: "delete_extension", summary: L("删除组件「\(item.name)」"), risk: .destructive, items: [ChangeItem(label: item.name, before: item.summary)])
         if case .rejected(let reason) = await environment.context.approvals.review(proposal) {
             return Render.rejected(reason)
         }
@@ -164,12 +165,12 @@ enum ExtensionTools {
     }
 
     private static func access(_ environment: ToolEnvironment) throws -> ExtensionAccess {
-        guard let extensions = environment.context.extensions else { throw AgentToolError.badArguments("组件功能不可用") }
+        guard let extensions = environment.context.extensions else { throw AgentToolError.badArguments("Extensions are not available") }
         return extensions
     }
 
     private static func text(_ arguments: JSONValue, _ key: String) throws -> String {
-        guard let value = arguments[key]?.string, !value.isEmpty else { throw AgentToolError.badArguments("缺少 \(key)") }
+        guard let value = arguments[key]?.string, !value.isEmpty else { throw AgentToolError.badArguments("Missing \(key)") }
         return value
     }
 
@@ -189,7 +190,7 @@ enum ExtensionTools {
             "category": "custom",
             "icon": .string(try text(arguments, "icon")),
         ]
-        guard var action = arguments["action"]?.object else { throw AgentToolError.badArguments("缺少 action") }
+        guard var action = arguments["action"]?.object else { throw AgentToolError.badArguments("Missing action") }
         if action["type"]?.string == "script" { action["file"] = "script.js" }
         fields["action"] = .object(action)
         if let match = arguments["match"] { fields["match"] = match }
@@ -201,7 +202,7 @@ enum ExtensionTools {
         } catch let error as ExtensionError {
             throw error
         } catch {
-            throw ExtensionError.invalidManifest("结构不正确：\(error.localizedDescription)")
+            throw ExtensionError.invalidManifest(L("结构不正确：\(error.localizedDescription)"))
         }
         try ExtensionValidator.validate(manifest)
         return manifest

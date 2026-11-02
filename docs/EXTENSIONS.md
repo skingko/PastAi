@@ -58,7 +58,7 @@ Blocked URL schemes include `file`, `javascript`, `data`, `ssh` and `shortcuts`.
 
 ### Scripts
 
-Define `run(input)`. `input.text` is the selection and `input.options` holds the option values.
+Define `run(input)`. `input.text` is the selection, `input.options` holds the option values, and `input.language` is the app language, `en` or `zh`.
 
 ```js
 function run(input) {
@@ -149,7 +149,7 @@ extensions/my-tool/
 
 ### 脚本
 
-定义 `run(input)`。`input.text` 是选中的文字，`input.options` 是设置项的值。
+定义 `run(input)`。`input.text` 是选中的文字，`input.options` 是设置项的值，`input.language` 是应用语言（`en` 或 `zh`）。
 
 ```js
 function run(input) {

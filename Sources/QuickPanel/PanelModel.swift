@@ -14,9 +14,9 @@ public enum DateFilter: String, CaseIterable, Identifiable, Sendable {
     public var id: String { rawValue }
     var label: String {
         switch self {
-        case .today: "今天"
-        case .week: "近 7 天"
-        case .month: "近 30 天"
+        case .today: L("今天")
+        case .week: L("近 7 天")
+        case .month: L("近 30 天")
         }
     }
 
@@ -63,6 +63,8 @@ public final class PanelModel {
     var sourceFilter: SourceApp? { didSet { if sourceFilter != oldValue { reload() } } }
     var dateFilter: DateFilter? { didSet { if dateFilter != oldValue { reload() } } }
     var showsFilters = false
+    /// A brief message over the cards, for what a paste could not do.
+    private(set) var notice: String?
 
     var cursorID: Int64?
     var selection: Set<Int64> = []
@@ -72,6 +74,7 @@ public final class PanelModel {
     @ObservationIgnored private var reloadTask: Task<Void, Never>?
     @ObservationIgnored private var changesTask: Task<Void, Never>?
     @ObservationIgnored private var loadingMore = false
+    @ObservationIgnored private var noticeTask: Task<Void, Never>?
 
     public init(service: ClipService, settings: AppSettings) {
         self.service = service
@@ -102,10 +105,21 @@ public final class PanelModel {
         sourceFilter = nil
         dateFilter = nil
         showsFilters = false
+        notice = nil
         tab = .history
         cursorID = clips.first?.id
         selection = cursorID.map { [$0] } ?? []
         scrollRequest += 1
+    }
+
+    func showNotice(_ text: String) {
+        notice = text
+        noticeTask?.cancel()
+        noticeTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            self?.notice = nil
+        }
     }
 
     private func resetAndReload() {
@@ -246,7 +260,7 @@ public final class PanelModel {
         cursorID = next
         selection = next.map { [$0] } ?? []
         Task {
-            try? await service.apply(ids.map { .softDelete(clipID: $0) }, source: .user, summary: "删除 \(ids.count) 项")
+            try? await service.apply(ids.map { .softDelete(clipID: $0) }, source: .user, summary: L("删除 \(ids.count) 项"))
         }
     }
 
@@ -258,14 +272,14 @@ public final class PanelModel {
 
     func pin(_ ids: [Int64], to board: Int64) {
         Task {
-            try? await service.apply(ids.map { .addToPinboard(clipID: $0, pinboardID: board) }, source: .user, summary: "加入 Pinboard")
+            try? await service.apply(ids.map { .addToPinboard(clipID: $0, pinboardID: board) }, source: .user, summary: L("加入 Pinboard"))
         }
     }
 
     func unpinFromCurrentBoard(_ ids: [Int64]) {
         guard case .pinboard(let board) = tab else { return }
         Task {
-            try? await service.apply(ids.map { .removeFromPinboard(clipID: $0, pinboardID: board) }, source: .user, summary: "移出 Pinboard")
+            try? await service.apply(ids.map { .removeFromPinboard(clipID: $0, pinboardID: board) }, source: .user, summary: L("移出 Pinboard"))
         }
     }
 
@@ -290,7 +304,7 @@ public final class PanelModel {
 
     func setAIHidden(_ ids: [Int64], hidden: Bool) {
         Task {
-            try? await service.apply(ids.map { .setAIHidden(clipID: $0, hidden: hidden) }, source: .user, summary: "调整 AI 可见性")
+            try? await service.apply(ids.map { .setAIHidden(clipID: $0, hidden: hidden) }, source: .user, summary: L("调整 AI 可见性"))
         }
     }
 

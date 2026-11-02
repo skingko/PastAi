@@ -23,7 +23,7 @@ struct WorkspaceView: View {
                 }
             }
         }
-        .searchable(text: $library.search, placement: .toolbar, prompt: "搜索全部内容")
+        .searchable(text: $library.search, placement: .toolbar, prompt: L("搜索全部内容"))
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -31,7 +31,7 @@ struct WorkspaceView: View {
                 } label: {
                     Label("Agent", systemImage: "sparkles")
                 }
-                .help("显示或隐藏 Agent")
+                .help(L("显示或隐藏 Agent"))
             }
         }
     }
@@ -42,7 +42,7 @@ private struct LibrarySidebar: View {
 
     var body: some View {
         List(selection: $model.section) {
-            Label("全部", systemImage: "tray.full").tag(LibrarySection.all)
+            Label(L("全部"), systemImage: "tray.full").tag(LibrarySection.all)
             if !model.pinboards.isEmpty {
                 Section("Pinboard") {
                     ForEach(model.pinboards) { board in
@@ -50,7 +50,7 @@ private struct LibrarySidebar: View {
                             Circle().fill(Color(hex: board.colorHex)).frame(width: 10, height: 10)
                             Text(board.name).lineLimit(1)
                             if board.aiHidden {
-                                Image(systemName: "eye.slash").font(.caption2).foregroundStyle(.secondary).help("对 AI 隐藏")
+                                Image(systemName: "eye.slash").font(.caption2).foregroundStyle(.secondary).help(L("对 AI 隐藏"))
                             }
                             Spacer()
                             Text("\(model.pinboardCounts[board.id] ?? 0)").font(.caption).foregroundStyle(.secondary)
@@ -59,13 +59,13 @@ private struct LibrarySidebar: View {
                     }
                 }
             }
-            Section("类型") {
+            Section(L("类型")) {
                 ForEach(ClipKind.allCases) { kind in
-                    Label(kind.displayName, systemImage: kind.symbolName).tag(LibrarySection.kind(kind))
+                    Label(kind.categoryName, systemImage: kind.symbolName).tag(LibrarySection.kind(kind))
                 }
             }
             if !model.tags.isEmpty {
-                Section("标签") {
+                Section(L("标签")) {
                     ForEach(model.tags.prefix(30)) { tag in
                         HStack {
                             Label(tag.name, systemImage: "tag")
@@ -77,7 +77,7 @@ private struct LibrarySidebar: View {
                 }
             }
             Section {
-                Label("回收站", systemImage: "trash").tag(LibrarySection.trash)
+                Label(L("回收站"), systemImage: "trash").tag(LibrarySection.trash)
             }
         }
         .listStyle(.sidebar)
@@ -102,48 +102,54 @@ private struct ClipListView: View {
         }
         .overlay {
             if model.clips.isEmpty {
-                ContentUnavailableView(model.search.isEmpty ? "没有内容" : "没有匹配的内容", systemImage: "doc.on.clipboard")
+                ContentUnavailableView(model.search.isEmpty ? L("没有内容") : L("没有匹配的内容"), systemImage: "doc.on.clipboard")
             }
         }
         .safeAreaInset(edge: .bottom) {
             HStack {
-                Text("\(model.total) 项").font(.caption).foregroundStyle(.secondary)
+                Text(L("\(model.total) 项")).font(.caption).foregroundStyle(.secondary)
                 Spacer()
                 if model.section == .trash, !model.clips.isEmpty {
-                    Button("清空回收站", role: .destructive) { confirmsEmptyTrash = true }.controlSize(.small)
+                    Button(L("清空回收站"), role: .destructive) { confirmsEmptyTrash = true }.controlSize(.small)
                 }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(.bar)
         }
-        .alert("永久删除回收站里的全部内容？", isPresented: $confirmsEmptyTrash) {
-            Button("永久删除", role: .destructive) { model.emptyTrash() }
-            Button("取消", role: .cancel) {}
+        .alert(
+            model.notice ?? "",
+            isPresented: Binding(get: { model.notice != nil }, set: { if !$0 { model.notice = nil } })
+        ) {
+            Button(L("好")) {}
+        }
+        .alert(L("永久删除回收站里的全部内容？"), isPresented: $confirmsEmptyTrash) {
+            Button(L("永久删除"), role: .destructive) { model.emptyTrash() }
+            Button(L("取消"), role: .cancel) {}
         } message: {
-            Text("这个操作无法撤销。")
+            Text(L("这个操作无法撤销。"))
         }
     }
 
     @ViewBuilder
     private func menu(for ids: Set<Int64>) -> some View {
         if model.section == .trash {
-            Button("恢复") { model.restore(ids) }
+            Button(L("恢复")) { model.restore(ids) }
         } else {
-            Button("拷贝") { model.copy(ids) }
-            Button("交给 Agent") { agent.attach(Array(ids)) }
+            Button(L("拷贝")) { model.copy(ids) }
+            Button(L("交给 Agent")) { agent.attach(Array(ids)) }
             if !model.pinboards.isEmpty {
-                Menu("加入 Pinboard") {
+                Menu(L("加入 Pinboard")) {
                     ForEach(model.pinboards) { board in
                         Button(board.name) { model.pin(ids, to: board.id) }
                     }
                 }
             }
             if case .pinboard(let board) = model.section {
-                Button("从此 Pinboard 移除") { model.unpin(ids, from: board) }
+                Button(L("从此 Pinboard 移除")) { model.unpin(ids, from: board) }
             }
             Divider()
-            Button("删除", role: .destructive) { model.delete(ids) }
+            Button(L("删除"), role: .destructive) { model.delete(ids) }
         }
     }
 }
@@ -189,7 +195,7 @@ private struct ClipDetailView: View {
             ClipEditor(model: model, detail: detail).id(detail.clip.id)
         } else {
             ContentUnavailableView(
-                model.selection.count > 1 ? "已选择 \(model.selection.count) 项" : "选择一个条目",
+                model.selection.count > 1 ? L("已选择 \(model.selection.count) 项") : L("选择一个条目"),
                 systemImage: "doc.text.magnifyingglass"
             )
         }
@@ -218,7 +224,7 @@ private struct ClipEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            TextField("标题", text: $title)
+            TextField(L("标题"), text: $title)
                 .textFieldStyle(.plain)
                 .font(.title3.weight(.semibold))
             metadata
@@ -230,7 +236,7 @@ private struct ClipEditor: View {
             } else {
                 MediaPreview(detail: detail, service: model.service)
                 if let ocr = clip.ocrText, !ocr.isEmpty {
-                    DisclosureGroup("图中文字") {
+                    DisclosureGroup(L("图中文字")) {
                         Text(ocr).font(.callout).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
@@ -238,20 +244,20 @@ private struct ClipEditor: View {
             Divider()
             HStack {
                 Image(systemName: "tag").foregroundStyle(.secondary)
-                TextField("标签，用逗号分隔", text: $tagText)
+                TextField(L("标签，用逗号分隔"), text: $tagText)
                     .textFieldStyle(.plain)
                     .onSubmit { saveTags() }
             }
             HStack {
-                Toggle("对 AI 隐藏", isOn: Binding(
+                Toggle(L("对 AI 隐藏"), isOn: Binding(
                     get: { clip.aiHidden || clip.isSensitive },
                     set: { model.setAIHidden(id: clip.id, hidden: $0) }
                 ))
                 .disabled(clip.isSensitive)
-                .help(clip.isSensitive ? "检测到敏感内容，始终对 AI 隐藏" : "")
+                .help(clip.isSensitive ? L("检测到敏感内容，始终对 AI 隐藏") : "")
                 Spacer()
-                Button("拷贝") { model.copy([clip.id]) }
-                Button("保存") { save() }
+                Button(L("拷贝")) { model.copy([clip.id]) }
+                Button(L("保存")) { save() }
                     .keyboardShortcut("s", modifiers: .command)
                     .disabled(!isDirty)
             }
@@ -265,7 +271,7 @@ private struct ClipEditor: View {
             if let app = clip.sourceAppName { Text(app) }
             Text(clip.lastCopiedAt.formatted(date: .abbreviated, time: .shortened))
             Text(ByteCountFormatter.string(fromByteCount: clip.byteSize, countStyle: .file))
-            if clip.copyCount > 1 { Text("复制 \(clip.copyCount) 次") }
+            if clip.copyCount > 1 { Text(L("复制 \(clip.copyCount) 次")) }
         }
         .font(.caption)
         .foregroundStyle(.secondary)

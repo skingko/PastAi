@@ -112,42 +112,184 @@ import Testing
         #expect(harness.pasteboard.data(forType: .html) == nil)
     }
 
-    @Test func fileClipSurvivesTheOriginalBeingDeleted() async throws {
-        let harness = try makeHarness()
+    private func capturedFile(_ harness: Harness, _ file: URL) async throws -> ClipDetail {
+        put(harness.pasteboard, [(PasteboardTypes.fileURL, Data(file.absoluteString.utf8))])
+        harness.capture.poll()
+        await harness.capture.drain()
+        let id = try #require(try await harness.service.list(ClipQuery()).first).id
+        return try #require(try await harness.service.detail(id: id))
+    }
+
+    private func temporaryFolder() throws -> URL {
         let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
+    }
+
+    @Test func copiedFilesAreRecordedByPathAlone() async throws {
+        let harness = try makeHarness()
+        let directory = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: directory) }
         let file = directory.appending(path: "report.pdf")
         try Data("pdf bytes".utf8).write(to: file)
 
-        put(harness.pasteboard, [(PasteboardTypes.fileURL, Data(file.absoluteString.utf8))])
-        harness.capture.poll()
-        await harness.capture.drain()
-
-        let id = try #require(try await harness.service.list(ClipQuery()).first).id
-        let detail = try #require(try await harness.service.detail(id: id))
+        let detail = try await capturedFile(harness, file)
         #expect(detail.clip.kind == .file)
-        let snapshot = try #require(detail.files.first?.snapshotPath)
-        #expect(snapshot.hasSuffix("report.pdf"))
-
-        try FileManager.default.removeItem(at: directory)
-        let resolved = try #require(harness.service.resolveURL(for: detail.files[0]))
-        #expect(try Data(contentsOf: resolved) == Data("pdf bytes".utf8))
+        #expect(detail.files.first?.snapshotPath == nil)
+        #expect(!FileManager.default.fileExists(atPath: harness.service.paths.files.appending(path: String(detail.clip.id)).path))
+        #expect(harness.service.resolveURL(for: detail.files[0])?.path == detail.files[0].originalPath)
     }
 
-    @Test func filesOverTheLimitStayByReference() async throws {
+    @Test func finderReferenceURLsBecomeRealPaths() async throws {
         let harness = try makeHarness()
-        harness.settings.snapshotLimitMB = 0
-        let file = FileManager.default.temporaryDirectory.appending(path: "\(UUID().uuidString).mov")
-        try Data("movie".utf8).write(to: file)
-        defer { try? FileManager.default.removeItem(at: file) }
+        let directory = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let file = directory.appending(path: "report.pdf")
+        try Data("pdf bytes".utf8).write(to: file)
+        let reference = try #require((file as NSURL).perform(#selector(NSURL.fileReferenceURL))?.takeUnretainedValue() as? NSURL)
+        #expect(reference.absoluteString?.hasPrefix("file:///.file/id=") == true)
 
-        put(harness.pasteboard, [(PasteboardTypes.fileURL, Data(file.absoluteString.utf8))])
+        put(harness.pasteboard, [(PasteboardTypes.fileURL, Data((reference.absoluteString ?? "").utf8))])
         harness.capture.poll()
         await harness.capture.drain()
 
         let id = try #require(try await harness.service.list(ClipQuery()).first).id
-        let detail = try #require(try await harness.service.detail(id: id))
-        #expect(detail.clip.kind == .video)
+        let stored = try #require(try await harness.service.detail(id: id)?.files.first)
+        #expect(stored.fileName == "report.pdf")
+        #expect(URL(fileURLWithPath: stored.originalPath).resolvingSymlinksInPath() == file.resolvingSymlinksInPath())
+    }
+
+    @Test func foldersAreRecordedByPathAlone() async throws {
+        let harness = try makeHarness()
+        let directory = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try Data("inside".utf8).write(to: directory.appending(path: "inside.txt"))
+
+        let detail = try await capturedFile(harness, directory)
+        #expect(detail.clip.kind == .file)
+        #expect(detail.files.first?.isDirectory == true)
         #expect(detail.files.first?.snapshotPath == nil)
+    }
+
+    @Test func pastingAFileThatIsGoneReportsItAndLeavesThePasteboardAlone() async throws {
+        let harness = try makeHarness()
+        let directory = try temporaryFolder()
+        let file = directory.appending(path: "report.pdf")
+        try Data("pdf bytes".utf8).write(to: file)
+        let detail = try await capturedFile(harness, file)
+        try FileManager.default.removeItem(at: directory)
+
+        put(harness.pasteboard, [(PasteboardTypes.plainText, Data("before".utf8))])
+        let writer = PasteWriter(service: harness.service, pasteboard: harness.pasteboard)
+        #expect(throws: MissingFilesError(names: ["report.pdf"])) {
+            try writer.write([detail], mode: .original)
+        }
+        #expect(harness.pasteboard.string(forType: .string) == "before")
+
+        try writer.write([detail], mode: .plainText)
+        #expect(harness.pasteboard.string(forType: .string) == detail.files[0].originalPath)
+    }
+
+    @Test func oneMissingFileBlocksAMultiPasteRatherThanDroppingIt() async throws {
+        let harness = try makeHarness()
+        let directory = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let kept = directory.appending(path: "kept.pdf")
+        let gone = directory.appending(path: "gone.pdf")
+        try Data("a".utf8).write(to: kept)
+        try Data("b".utf8).write(to: gone)
+        let first = try await capturedFile(harness, kept)
+        let second = try await capturedFile(harness, gone)
+        try FileManager.default.removeItem(at: gone)
+
+        let writer = PasteWriter(service: harness.service, pasteboard: harness.pasteboard)
+        #expect(throws: MissingFilesError(names: ["gone.pdf"])) {
+            try writer.write([first, second], mode: .original)
+        }
+    }
+
+    @Test func aFileInTheTrashCountsAsGone() async throws {
+        let harness = try makeHarness()
+        let directory = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let file = directory.appending(path: "report.pdf")
+        try Data("pdf bytes".utf8).write(to: file)
+        let detail = try await capturedFile(harness, file)
+
+        let trash = directory.appending(path: ".Trash", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: trash, withIntermediateDirectories: true)
+        try FileManager.default.moveItem(at: file, to: trash.appending(path: "report.pdf"))
+
+        #expect(harness.service.resolveURL(for: detail.files[0]) == nil)
+    }
+
+    @Test func aMovedFileIsFollowed() async throws {
+        let harness = try makeHarness()
+        let directory = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let file = directory.appending(path: "report.pdf")
+        let moved = directory.appending(path: "renamed.pdf")
+        try Data("pdf bytes".utf8).write(to: file)
+        let detail = try await capturedFile(harness, file)
+        try FileManager.default.moveItem(at: file, to: moved)
+
+        #expect(try Data(contentsOf: #require(harness.service.resolveURL(for: detail.files[0]))) == Data("pdf bytes".utf8))
+    }
+
+    @Test func screenshotsKeepTheirOwnCopy() async throws {
+        let harness = try makeHarness()
+        let directory = FileManager.default.homeDirectoryForCurrentUser.appending(path: "Library/Caches/PastAiTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let file = directory.appending(path: "shot.png")
+        try Data("pixels".utf8).write(to: file)
+        let marker = Data([1])
+        #expect(marker.withUnsafeBytes { setxattr(file.path, "com.apple.metadata:kMDItemIsScreenCapture", $0.baseAddress, $0.count, 0, 0) } == 0)
+
+        let detail = try await capturedFile(harness, file)
+        try #require(detail.files.first?.snapshotPath != nil)
+        try FileManager.default.removeItem(at: file)
+        #expect(try Data(contentsOf: #require(harness.service.resolveURL(for: detail.files[0]))) == Data("pixels".utf8))
+    }
+
+    @Test func picturesInTemporaryFoldersKeepTheirOwnCopy() async throws {
+        let harness = try makeHarness()
+        let directory = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let file = directory.appending(path: "capture.png")
+        try Data("pixels".utf8).write(to: file)
+
+        let detail = try await capturedFile(harness, file)
+        #expect(detail.clip.kind == .image)
+        #expect(detail.files.first?.snapshotPath != nil)
+    }
+
+    @Test func oldFileCopiesAreReleasedOnlyWhileTheOriginalExists() async throws {
+        let harness = try makeHarness()
+        let directory = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let kept = directory.appending(path: "kept.pdf")
+        let gone = directory.appending(path: "gone.pdf")
+        try Data("a".utf8).write(to: kept)
+        try Data("b".utf8).write(to: gone)
+        var details = [try await capturedFile(harness, kept), try await capturedFile(harness, gone)]
+        for detail in details {
+            let relative = "\(detail.clip.id)/0-\(detail.files[0].fileName)"
+            let copy = harness.service.paths.files.appending(path: relative)
+            try FileManager.default.createDirectory(at: copy.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try FileManager.default.copyItem(atPath: detail.files[0].originalPath, toPath: copy.path)
+            try await harness.service.setSnapshot(fileID: detail.files[0].id, relativePath: relative)
+        }
+        try FileManager.default.removeItem(at: gone)
+
+        #expect(try await harness.service.releaseFileSnapshots() == 1)
+
+        details = [
+            try #require(try await harness.service.detail(id: details[0].clip.id)),
+            try #require(try await harness.service.detail(id: details[1].clip.id)),
+        ]
+        #expect(details[0].files[0].snapshotPath == nil)
+        #expect(!FileManager.default.fileExists(atPath: harness.service.paths.files.appending(path: String(details[0].clip.id)).path))
+        #expect(try Data(contentsOf: #require(harness.service.resolveURL(for: details[1].files[0]))) == Data("b".utf8))
     }
 }

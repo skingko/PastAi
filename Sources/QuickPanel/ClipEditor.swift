@@ -19,7 +19,7 @@ final class ClipEditorController: NSObject, NSWindowDelegate {
                     title: detail.clip.title ?? "",
                     text: detail.clip.plainText ?? "",
                     editsText: detail.clip.kind.isTextual,
-                    heading: detail.clip.kind.isTextual ? "编辑内容" : "重命名",
+                    heading: detail.clip.kind.isTextual ? L("编辑内容") : L("重命名"),
                     onCancel: { [weak self] in self?.close() },
                     onSave: { [weak self] title, text in self?.save(detail: detail, title: title, text: text) }
                 )
@@ -33,7 +33,7 @@ final class ClipEditorController: NSObject, NSWindowDelegate {
                 title: "",
                 text: "",
                 editsText: true,
-                heading: "新建文本",
+                heading: L("新建文本"),
                 onCancel: { [weak self] in self?.close() },
                 onSave: { [weak self] title, text in self?.create(title: title, text: text) }
             )
@@ -51,7 +51,7 @@ final class ClipEditorController: NSObject, NSWindowDelegate {
         }
         close()
         guard !mutations.isEmpty else { return }
-        Task { try? await service.apply(mutations, source: .user, summary: "编辑条目") }
+        Task { try? await service.apply(mutations, source: .user, summary: L("编辑条目")) }
     }
 
     private func create(title: String, text: String) {
@@ -60,7 +60,7 @@ final class ClipEditorController: NSObject, NSWindowDelegate {
         Task {
             try? await service.apply(
                 [.createText(text: text, title: title.isEmpty ? nil : title, pinboardID: nil)],
-                source: .user, summary: "新建文本"
+                source: .user, summary: L("新建文本")
             )
         }
     }
@@ -103,7 +103,7 @@ struct ClipEditorView: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            TextField("标题（可选）", text: $title).textFieldStyle(.roundedBorder)
+            TextField(L("标题（可选）"), text: $title).textFieldStyle(.roundedBorder)
             if editsText {
                 TextEditor(text: $text)
                     .font(.system(size: 13))
@@ -115,8 +115,8 @@ struct ClipEditorView: View {
             }
             HStack {
                 Spacer()
-                Button("取消", action: onCancel).keyboardShortcut(.cancelAction)
-                Button("保存") { onSave(title, text) }.keyboardShortcut("s", modifiers: .command)
+                Button(L("取消"), action: onCancel).keyboardShortcut(.cancelAction)
+                Button(L("保存")) { onSave(title, text) }.keyboardShortcut("s", modifiers: .command)
             }
         }
         .padding(14)

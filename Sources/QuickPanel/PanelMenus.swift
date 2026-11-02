@@ -76,13 +76,13 @@ extension PanelModel {
 
         let menu = NSMenu()
         menu.autoenablesItems = false
-        menu.addItem(ActionItem("粘贴") { [self] in actions.paste(targets, .original) })
-        menu.addItem(ActionItem("粘贴为纯文本") { [self] in actions.paste(targets, .plainText) })
-        menu.addItem(ActionItem("预览") { [self] in actions.quickLook(clip.id) })
-        menu.addItem(ActionItem(clip.kind.isTextual ? "编辑…" : "重命名…") { [self] in actions.edit(clip.id) })
+        menu.addItem(ActionItem(L("粘贴")) { [self] in actions.paste(targets, .original) })
+        menu.addItem(ActionItem(L("粘贴为纯文本")) { [self] in actions.paste(targets, .plainText) })
+        menu.addItem(ActionItem(L("预览")) { [self] in actions.quickLook(clip.id) })
+        menu.addItem(ActionItem(clip.kind.isTextual ? L("编辑…") : L("重命名…")) { [self] in actions.edit(clip.id) })
         menu.addItem(.separator())
 
-        let boards = NSMenuItem(title: "加入 Pinboard", action: nil, keyEquivalent: "")
+        let boards = NSMenuItem(title: L("加入 Pinboard"), action: nil, keyEquivalent: "")
         boards.isEnabled = !pinboards.isEmpty
         if !pinboards.isEmpty {
             let submenu = NSMenu()
@@ -93,13 +93,13 @@ extension PanelModel {
         }
         menu.addItem(boards)
         if case .pinboard = tab {
-            menu.addItem(ActionItem("从此 Pinboard 移除") { [self] in unpinFromCurrentBoard(targets) })
+            menu.addItem(ActionItem(L("从此 Pinboard 移除")) { [self] in unpinFromCurrentBoard(targets) })
         }
-        menu.addItem(ActionItem("交给 Agent") { [self] in actions.sendToAgent(targets) })
+        menu.addItem(ActionItem(L("交给 Agent")) { [self] in actions.sendToAgent(targets) })
         menu.addItem(.separator())
 
-        menu.addItem(ActionItem(clip.aiHidden ? "允许 AI 访问" : "对 AI 隐藏") { [self] in setAIHidden(targets, hidden: !clip.aiHidden) })
-        menu.addItem(ActionItem("删除") { [self] in
+        menu.addItem(ActionItem(clip.aiHidden ? L("允许 AI 访问") : L("对 AI 隐藏")) { [self] in setAIHidden(targets, hidden: !clip.aiHidden) })
+        menu.addItem(ActionItem(L("删除")) { [self] in
             selection = Set(targets)
             deleteSelection()
         })
@@ -109,14 +109,14 @@ extension PanelModel {
     func menu(for board: Pinboard, edit: @escaping @MainActor () -> Void) -> NSMenu {
         let menu = NSMenu()
         menu.autoenablesItems = false
-        menu.addItem(ActionItem("编辑…", handler: edit))
-        menu.addItem(ActionItem(board.aiHidden ? "允许 AI 访问" : "对 AI 隐藏") { [self] in
+        menu.addItem(ActionItem(L("编辑…"), handler: edit))
+        menu.addItem(ActionItem(board.aiHidden ? L("允许 AI 访问") : L("对 AI 隐藏")) { [self] in
             var updated = board
             updated.aiHidden.toggle()
             update(updated)
         })
         menu.addItem(.separator())
-        menu.addItem(ActionItem("删除 Pinboard") { [self] in delete(board) })
+        menu.addItem(ActionItem(L("删除 Pinboard")) { [self] in delete(board) })
         return menu
     }
 }

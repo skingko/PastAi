@@ -1,3 +1,4 @@
+import ClipCore
 import Foundation
 import os
 import Testing
@@ -177,8 +178,8 @@ extension StubbedHTTP {
             _ = try await collect(client, sampleRequest)
             Issue.record("expected a failure")
         } catch let error as LLMError {
-            #expect(error.title == "当前套餐不包含这个模型")
-            #expect(error.detail?.contains("错误码 1311") == true)
+            #expect(error.title == L("当前套餐不包含这个模型"))
+            #expect(error.detail?.contains("1311") == true)
             #expect(error.detail?.contains("glm-5.3-flashx") == true)
         }
         #expect(StubProtocol.requests.count == 1, "plan refusals must not be repeated")

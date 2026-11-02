@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "id": "io.github.skingko.pastai.word-count",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "PastAi",
   "name": {
     "en": "Word Count",

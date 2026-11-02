@@ -44,9 +44,9 @@ public enum ClipServiceError: Error, CustomStringConvertible, Equatable {
 
     public var description: String {
         switch self {
-        case .clipNotFound(let id): "条目 \(id) 不存在"
-        case .pinboardNotFound(let id): "Pinboard \(id) 不存在"
-        case .notEditable(let id): "条目 \(id) 不是文本，无法修改内容"
+        case .clipNotFound(let id): L("条目 \(id) 不存在")
+        case .pinboardNotFound(let id): L("Pinboard \(id) 不存在")
+        case .notEditable(let id): L("条目 \(id) 不是文本，无法修改内容")
         }
     }
 }

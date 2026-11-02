@@ -2,6 +2,7 @@ import AppKit
 import ClipAgent
 import ClipCore
 import ClipExtensions
+import ClipImport
 import ServiceManagement
 import SwiftUI
 
@@ -17,20 +18,21 @@ struct SettingsView: View {
     var market: MarketModel
     var onHotKeyChanged: (HotKeyCombo) -> Void
     var onAskAgent: () -> Void
+    var onImported: () -> Void
     @Binding var tab: SettingsTab
 
     var body: some View {
         TabView(selection: $tab) {
             GeneralSettings(settings: settings, onHotKeyChanged: onHotKeyChanged)
-                .tabItem { Label("通用", systemImage: "gearshape") }.tag(SettingsTab.general)
+                .tabItem { Label(L("通用"), systemImage: "gearshape") }.tag(SettingsTab.general)
             ExtensionSettings(settings: settings, library: library, market: market, onAskAgent: onAskAgent)
-                .tabItem { Label("组件", systemImage: "puzzlepiece.extension") }.tag(SettingsTab.extensions)
+                .tabItem { Label(L("组件"), systemImage: "puzzlepiece.extension") }.tag(SettingsTab.extensions)
             PrivacySettings(settings: settings)
-                .tabItem { Label("隐私", systemImage: "hand.raised") }.tag(SettingsTab.privacy)
+                .tabItem { Label(L("隐私"), systemImage: "hand.raised") }.tag(SettingsTab.privacy)
             ModelSettings(agent: agent)
-                .tabItem { Label("AI 模型", systemImage: "sparkles") }.tag(SettingsTab.models)
-            StorageSettings(service: service)
-                .tabItem { Label("存储", systemImage: "internaldrive") }.tag(SettingsTab.storage)
+                .tabItem { Label(L("AI 模型"), systemImage: "sparkles") }.tag(SettingsTab.models)
+            StorageSettings(service: service, settings: settings, onImported: onImported)
+                .tabItem { Label(L("存储"), systemImage: "internaldrive") }.tag(SettingsTab.storage)
         }
         .frame(width: 680, height: 580)
     }
@@ -43,13 +45,13 @@ private struct GeneralSettings: View {
 
     var body: some View {
         Form {
-            LabeledContent("唤出剪贴板") {
+            LabeledContent(L("唤出剪贴板")) {
                 HotKeyRecorder(combo: settings.hotKey) { combo in
                     settings.hotKey = combo
                     onHotKeyChanged(combo)
                 }
             }
-            Toggle("登录时启动", isOn: $launchAtLogin)
+            Toggle(L("登录时启动"), isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, enabled in
                     do {
                         if enabled {
@@ -61,14 +63,14 @@ private struct GeneralSettings: View {
                         launchAtLogin = SMAppService.mainApp.status == .enabled
                     }
                 }
-            Picker("保留历史", selection: $settings.retentionDays) {
-                Text("7 天").tag(7)
-                Text("30 天").tag(30)
-                Text("90 天").tag(90)
-                Text("1 年").tag(365)
-                Text("永久").tag(0)
+            Picker(L("保留历史"), selection: $settings.retentionDays) {
+                Text(L("7 天")).tag(7)
+                Text(L("30 天")).tag(30)
+                Text(L("90 天")).tag(90)
+                Text(L("1 年")).tag(365)
+                Text(L("永久")).tag(0)
             }
-            Text("Pinboard 里的内容不受影响，永远保留。删除的内容在回收站保留 30 天。")
+            Text(L("Pinboard 里的内容不受影响，永远保留。删除的内容在回收站保留 30 天。"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Section {
@@ -78,15 +80,15 @@ private struct GeneralSettings: View {
                             get: { settings.pinnedKinds.contains(kind) },
                             set: { settings.setKind(kind, pinned: $0) }
                         )) {
-                            Label(kind.displayName, systemImage: kind.symbolName)
+                            Label(kind.categoryName, systemImage: kind.symbolName)
                         }
                         .toggleStyle(.checkbox)
                     }
                 }
             } header: {
-                Text("固定为 Pinboard 的分类")
+                Text(L("固定为 Pinboard 的分类"))
             } footer: {
-                Text("勾选的分类会显示在面板标签栏里，排在你自建的 Pinboard 前面。")
+                Text(L("勾选的分类会显示在面板标签栏里，排在你自建的 Pinboard 前面。"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -103,7 +105,7 @@ private struct HotKeyRecorder: View {
     @State private var monitor: Any?
 
     var body: some View {
-        Button(isRecording ? "按下新的快捷键…" : HotKeyFormatter.describe(combo)) {
+        Button(isRecording ? L("按下新的快捷键…") : HotKeyFormatter.describe(combo)) {
             isRecording ? stop() : start()
         }
         .onDisappear { stop() }
@@ -145,11 +147,11 @@ private struct PrivacySettings: View {
 
     var body: some View {
         Form {
-            Section("记录") {
-                Toggle("暂停记录", isOn: Binding(get: { settings.isPaused }, set: { _ in settings.togglePause() }))
-                Toggle("忽略密码管理器标记的机密内容", isOn: $settings.ignoreConcealed)
+            Section(L("记录")) {
+                Toggle(L("暂停记录"), isOn: Binding(get: { settings.isPaused }, set: { _ in settings.togglePause() }))
+                Toggle(L("忽略密码管理器标记的机密内容"), isOn: $settings.ignoreConcealed)
             }
-            Section("不记录这些应用") {
+            Section(L("不记录这些应用")) {
                 ForEach(settings.ignoredBundleIDs, id: \.self) { bundleID in
                     HStack {
                         Text(bundleID).lineLimit(1)
@@ -162,7 +164,7 @@ private struct PrivacySettings: View {
                         .buttonStyle(.borderless)
                     }
                 }
-                Menu("添加正在运行的应用") {
+                Menu(L("添加正在运行的应用")) {
                     ForEach(runningApps, id: \.processIdentifier) { app in
                         Button(app.localizedName ?? app.bundleIdentifier ?? "") {
                             if let id = app.bundleIdentifier, !settings.ignoredBundleIDs.contains(id) {
@@ -172,17 +174,17 @@ private struct PrivacySettings: View {
                     }
                 }
             }
-            Section("权限") {
-                LabeledContent("辅助功能") {
+            Section(L("权限")) {
+                LabeledContent(L("辅助功能")) {
                     if isTrusted {
-                        Label("已开启", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                        Label(L("已开启"), systemImage: "checkmark.circle.fill").foregroundStyle(.green)
                     } else {
-                        Button("开启…") {
+                        Button(L("开启…")) {
                             PasteSimulator.requestTrust()
                         }
                     }
                 }
-                Text("开启后回车可直接粘贴到当前应用。未开启时内容只写入剪贴板，需要手动按 ⌘V。")
+                Text(L("开启后回车可直接粘贴到当前应用。未开启时内容只写入剪贴板，需要手动按 ⌘V。"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -216,8 +218,8 @@ private struct ModelSettings: View {
                                 Button(preset.name) { add(preset) }
                             }
                             Divider()
-                            Button("自定义") {
-                                add(ModelProvider(name: "自定义", format: .openAICompatible, baseURL: "https://"))
+                            Button(L("自定义")) {
+                                add(ModelProvider(name: L("自定义"), format: .openAICompatible, baseURL: "https://"))
                             }
                         } label: {
                             Image(systemName: "plus")
@@ -243,20 +245,20 @@ private struct ModelSettings: View {
                 if let index = agent.providers.firstIndex(where: { $0.id == selection }) {
                     ProviderEditor(provider: $agent.providers[index], agent: agent).id(selection)
                 } else {
-                    ContentUnavailableView("选择或添加一个服务", systemImage: "sparkles")
+                    ContentUnavailableView(L("选择或添加一个服务"), systemImage: "sparkles")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
             Divider()
             Form {
-                Picker("主模型", selection: $agent.mainModel) {
-                    Text("未选择").tag(ModelRef?.none)
+                Picker(L("主模型"), selection: $agent.mainModel) {
+                    Text(L("未选择")).tag(ModelRef?.none)
                     ForEach(allModels, id: \.self) { reference in
                         Text(label(reference)).tag(ModelRef?.some(reference))
                     }
                 }
-                Picker("批量任务模型", selection: $agent.lightModel) {
-                    Text("与主模型相同").tag(ModelRef?.none)
+                Picker(L("批量任务模型"), selection: $agent.lightModel) {
+                    Text(L("与主模型相同")).tag(ModelRef?.none)
                     ForEach(allModels, id: \.self) { reference in
                         Text(label(reference)).tag(ModelRef?.some(reference))
                     }
@@ -299,8 +301,8 @@ private struct ProviderEditor: View {
 
     var body: some View {
         Form {
-            TextField("名称", text: $provider.name)
-            Picker("接口格式", selection: $provider.format) {
+            TextField(L("名称"), text: $provider.name)
+            Picker(L("接口格式"), selection: $provider.format) {
                 ForEach(ModelProvider.Format.allCases) { format in
                     Text(format.label).tag(format)
                 }
@@ -310,8 +312,8 @@ private struct ProviderEditor: View {
                 .onChange(of: apiKey) { _, value in
                     agent.keychain.save(value, account: provider.id.uuidString)
                 }
-            Toggle("模型支持看图", isOn: $provider.supportsVision)
-            Section("模型") {
+            Toggle(L("模型支持看图"), isOn: $provider.supportsVision)
+            Section(L("模型")) {
                 ForEach(provider.models, id: \.self) { model in
                     HStack {
                         Text(model).lineLimit(1)
@@ -325,9 +327,9 @@ private struct ProviderEditor: View {
                     }
                 }
                 HStack {
-                    TextField("模型名称", text: $newModel).onSubmit(addModel)
-                    Button("添加", action: addModel).disabled(newModel.isEmpty)
-                    Button(isFetching ? "获取中…" : "获取列表", action: fetchModels).disabled(isFetching)
+                    TextField(L("模型名称"), text: $newModel).onSubmit(addModel)
+                    Button(L("添加"), action: addModel).disabled(newModel.isEmpty)
+                    Button(isFetching ? L("获取中…") : L("获取列表"), action: fetchModels).disabled(isFetching)
                 }
                 if !fetchMessage.isEmpty {
                     Text(fetchMessage).font(.caption).foregroundStyle(.secondary)
@@ -335,7 +337,7 @@ private struct ProviderEditor: View {
             }
             Section {
                 HStack {
-                    Button(isTesting ? "测试中…" : "测试连接", action: testConnection)
+                    Button(isTesting ? L("测试中…") : L("测试连接"), action: testConnection)
                         .disabled(isTesting || testModel == nil)
                     if let testModel {
                         Text(testModel).font(.caption).foregroundStyle(.secondary).lineLimit(1)
@@ -348,7 +350,7 @@ private struct ProviderEditor: View {
                         .textSelection(.enabled)
                 }
                 if provider.baseURL.contains("/coding/") {
-                    Text("这是 Coding Plan 专用地址。Coding Plan 通常只允许在官方支持的工具里使用，在 PastAi 中调用可能被拒绝，甚至影响套餐权益。建议改用按量计费的 API Key。")
+                    Text(L("这是 Coding Plan 专用地址。Coding Plan 通常只允许在官方支持的工具里使用，在 PastAi 中调用可能被拒绝，甚至影响套餐权益。建议改用按量计费的 API Key。"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -375,7 +377,7 @@ private struct ProviderEditor: View {
             defer { isTesting = false }
             do {
                 let reply = try await ConnectionProbe.run(client: client, model: model)
-                testResult = ("连接正常，模型回复：\(reply.isEmpty ? "（空）" : String(reply.prefix(60)))", true)
+                testResult = (L("连接正常，模型回复：\(reply.isEmpty ? L("（空）") : String(reply.prefix(60)))"), true)
             } catch {
                 testResult = (error.localizedDescription, false)
             }
@@ -391,7 +393,7 @@ private struct ProviderEditor: View {
             do {
                 let models = try await client.listModels()
                 provider.models = models
-                fetchMessage = "找到 \(models.count) 个模型"
+                fetchMessage = L("找到 \(models.count) 个模型")
             } catch {
                 fetchMessage = error.localizedDescription
             }
@@ -401,24 +403,69 @@ private struct ProviderEditor: View {
 
 private struct StorageSettings: View {
     var service: ClipService
+    var settings: AppSettings
+    var onImported: () -> Void
     @State private var stats: LibraryStats?
     @State private var diskBytes: Int64 = 0
+    @State private var pasteLibrary: URL?
+    @State private var isImporting = false
+    @State private var importSummary: String?
 
     var body: some View {
         Form {
-            LabeledContent("条目") { Text("\(stats?.total ?? 0)") }
-            LabeledContent("占用空间") { Text(ByteCountFormatter.string(fromByteCount: diskBytes, countStyle: .file)) }
-            LabeledContent("存储位置") {
-                Button("在访达中显示") {
-                    NSWorkspace.shared.activateFileViewerSelecting([service.paths.root])
+            Section {
+                LabeledContent(L("条目")) { Text("\(stats?.total ?? 0)") }
+                LabeledContent(L("占用空间")) { Text(ByteCountFormatter.string(fromByteCount: diskBytes, countStyle: .file)) }
+                LabeledContent(L("存储位置")) {
+                    Button(L("在访达中显示")) {
+                        NSWorkspace.shared.activateFileViewerSelecting([service.paths.root])
+                    }
+                }
+            } footer: {
+                Text(L("复制的文件和文件夹只记录原始路径，不占用这里的空间。截图除外。"))
+            }
+            if let pasteLibrary {
+                Section {
+                    LabeledContent(L("剪贴板历史和 Pinboard")) {
+                        if isImporting {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Button(L("导入")) { runImport(from: pasteLibrary) }
+                        }
+                    }
+                } header: {
+                    Text(L("从 Paste 导入"))
+                } footer: {
+                    Text(importSummary ?? L("保留原来的时间、来源应用和 Pinboard。可以重复导入，不会产生重复内容。"))
                 }
             }
         }
         .formStyle(.grouped)
-        .task {
-            stats = try? await service.stats()
-            let root = service.paths.root
-            diskBytes = await Task.detached { Self.directorySize(root) }.value
+        .task { await refresh() }
+    }
+
+    private func refresh() async {
+        pasteLibrary = PasteImporter.locateLibrary()
+        stats = try? await service.stats()
+        let root = service.paths.root
+        diskBytes = await Task.detached { Self.directorySize(root) }.value
+    }
+
+    private func runImport(from library: URL) {
+        isImporting = true
+        importSummary = nil
+        let importer = PasteImporter(library: library, service: service, ignoredApps: Set(settings.ignoredBundleIDs))
+        Task {
+            do {
+                let report = try await importer.run(dryRun: false)
+                let skipped = report.skippedSecret + report.skippedIgnoredApp + report.unreadable
+                importSummary = L("已导入 \(report.imported) 条，\(report.alreadyPresent) 条已存在，跳过 \(skipped) 条。")
+                onImported()
+            } catch {
+                importSummary = error.localizedDescription
+            }
+            isImporting = false
+            await refresh()
         }
     }
 

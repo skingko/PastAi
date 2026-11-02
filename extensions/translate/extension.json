@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "id": "io.github.skingko.pastai.translate",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "PastAi",
   "name": {
     "en": "Translate",
@@ -27,7 +27,7 @@
         "en": "Translate into",
         "zh": "翻译成"
       },
-      "defaultValue": "简体中文",
+      "defaultValue": "$systemLanguage",
       "choices": [
         {
           "value": "简体中文",
@@ -87,7 +87,7 @@
         "en": "If already in that language, use",
         "zh": "原文已是该语言时翻译成"
       },
-      "defaultValue": "English",
+      "defaultValue": "$secondaryLanguage",
       "choices": [
         {
           "value": "简体中文",

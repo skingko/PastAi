@@ -165,12 +165,16 @@ public enum ClipBuilder {
         return stored
     }
 
+    /// Finder offers reference URLs, whose path is only an inode number, so a clip must store the real
+    /// path instead. A reference to a file that no longer exists gives nil: nothing else is known about it.
+    public static func fileURL(from data: Data) -> URL? {
+        guard let string = String(data: data, encoding: .utf8), let url = NSURL(string: string), url.isFileURL else { return nil }
+        return url.filePathURL?.standardizedFileURL
+    }
+
     private static func fileDraft(_ snapshot: PasteboardSnapshot, source: SourceInfo) -> CaptureDraft? {
         let urls = snapshot.items.compactMap { item -> URL? in
-            guard let entry = item.first(where: { $0.uti == PasteboardTypes.fileURL }),
-                  let string = String(data: entry.data, encoding: .utf8),
-                  let url = URL(string: string), url.isFileURL else { return nil }
-            return url.standardizedFileURL
+            item.first { $0.uti == PasteboardTypes.fileURL }.flatMap { fileURL(from: $0.data) }
         }
         guard !urls.isEmpty else { return nil }
 

@@ -186,9 +186,15 @@ public final class QuickPanelController: NSObject, NSWindowDelegate {
             for id in ids {
                 if let detail = try? await service.detail(id: id) { details.append(detail) }
             }
-            guard (try? writer.write(details, mode: mode)) ?? 0 > 0 else { return }
+            do {
+                guard try writer.write(details, mode: mode) > 0 else { return }
+            } catch {
+                if error is MissingFilesError { model.showNotice(error.localizedDescription) }
+                return
+            }
             hide()
-            for id in ids { try? await service.recordUse(clipID: id) }
+            // Last to first, so a multi-selection keeps its order at the front of the history.
+            for id in ids.reversed() { try? await service.recordUse(clipID: id) }
             guard simulatesPaste else { return }
             // The target app needs a moment to take key focus back from the panel before it sees Cmd-V.
             try? await Task.sleep(for: .milliseconds(60))
@@ -403,6 +409,7 @@ public final class QuickPanelController: NSObject, NSWindowDelegate {
             "selection": Array(model.selection).sorted(),
             "count": model.clips.count,
             "first": model.clips.first?.displayTitle ?? "",
+            "notice": model.notice ?? "",
             "showsFilters": model.showsFilters,
             "pinboards": model.pinboards.map(\.name),
             "paused": model.settings.isPaused,

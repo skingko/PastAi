@@ -35,14 +35,14 @@ struct AgentPane: View {
         .frame(minWidth: 360, idealWidth: 420)
         .background(Color(nsColor: .textBackgroundColor))
         .alert(
-            "把剪贴板内容发送给 \(model.consentRequest?.name ?? "")？",
+            L("把剪贴板内容发送给 \(model.consentRequest?.name ?? "")？"),
             isPresented: Binding(get: { model.consentRequest != nil }, set: { if !$0 { model.consentRequest = nil } }),
             presenting: model.consentRequest
         ) { provider in
-            Button("允许") { model.grantConsent(provider) }
-            Button("取消", role: .cancel) {}
+            Button(L("允许")) { model.grantConsent(provider) }
+            Button(L("取消"), role: .cancel) {}
         } message: { _ in
-            Text("Agent 读取的内容会发送到这个云端服务，对 AI 隐藏的内容不会发送。使用 Ollama 或 LM Studio 等本地模型时，内容不会离开这台 Mac。")
+            Text(L("Agent 读取的内容会发送到这个云端服务，对 AI 隐藏的内容不会发送。使用 Ollama 或 LM Studio 等本地模型时，内容不会离开这台 Mac。"))
         }
     }
 }
@@ -53,13 +53,13 @@ private struct AgentHeader: View {
     var model: AgentModel
 
     private var title: String {
-        model.sessions.first { $0.id == model.currentSessionID }?.title ?? "新对话"
+        model.sessions.first { $0.id == model.currentSessionID }?.title ?? L("新对话")
     }
 
     var body: some View {
         HStack(spacing: 10) {
             Menu {
-                Button("新对话") { model.newSession() }
+                Button(L("新对话")) { model.newSession() }
                 if !model.sessions.isEmpty {
                     Divider()
                     ForEach(model.sessions.prefix(20)) { session in
@@ -75,7 +75,7 @@ private struct AgentHeader: View {
             .menuStyle(.button)
             .buttonStyle(.plain)
             .menuIndicator(.hidden)
-            .help("切换对话")
+            .help(L("切换对话"))
             .disabled(model.isRunning)
 
             Spacer(minLength: 12)
@@ -85,7 +85,7 @@ private struct AgentHeader: View {
                     Button(reference.model) { model.selectModel(reference) }
                 }
                 if !model.availableModels.isEmpty { Divider() }
-                Button("模型设置…") { model.onOpenModelSettings?() }
+                Button(L("模型设置…")) { model.onOpenModelSettings?() }
             } label: {
                 HStack(spacing: 3) {
                     Text(model.modelLabel).lineLimit(1)
@@ -98,7 +98,7 @@ private struct AgentHeader: View {
             .buttonStyle(.plain)
             .menuIndicator(.hidden)
             .fixedSize()
-            .help(model.tokens.input > 0 ? "本次对话：输入 \(model.tokens.input)，输出 \(model.tokens.output) tokens" : "切换模型")
+            .help(model.tokens.input > 0 ? L("本次对话：输入 \(model.tokens.input)，输出 \(model.tokens.output) tokens") : L("切换模型"))
 
             Button {
                 model.newSession()
@@ -107,7 +107,7 @@ private struct AgentHeader: View {
             }
             .buttonStyle(PressableStyle())
             .foregroundStyle(.secondary)
-            .help("新对话")
+            .help(L("新对话"))
             .disabled(model.isRunning)
         }
         .padding(.horizontal, 16)
@@ -240,11 +240,11 @@ private struct TranscriptRow: View {
             Text(text).font(.system(size: 12)).foregroundStyle(.secondary)
         case .undo(_, let batchID, let isUndone):
             HStack(spacing: 8) {
-                Text(isUndone ? "这次的修改已撤销" : "这次修改了你的资料库")
+                Text(isUndone ? L("这次的修改已撤销") : L("这次修改了你的资料库"))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                 if !isUndone {
-                    Button("撤销") { model.undo(batchID: batchID) }
+                    Button(L("撤销")) { model.undo(batchID: batchID) }
                         .font(.system(size: 12, weight: .medium))
                         .buttonStyle(PressableStyle())
                         .foregroundStyle(Color.accentColor)
@@ -277,7 +277,7 @@ private struct ActivityGroup: View {
     private var title: String {
         if let running { return AgentModel.toolTitle(running.name) }
         if steps.count == 1 { return AgentModel.toolTitle(steps[0].name) }
-        return "完成了 \(steps.count) 个步骤"
+        return L("完成了 \(steps.count) 个步骤")
     }
 
     var body: some View {
@@ -291,7 +291,7 @@ private struct ActivityGroup: View {
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                     Text(title).font(.system(size: 12))
                     if failedCount > 0 {
-                        Text("\(failedCount) 个失败").font(.system(size: 12)).foregroundStyle(.red)
+                        Text(L("\(failedCount) 个失败")).font(.system(size: 12)).foregroundStyle(.red)
                     }
                     if running != nil {
                         ProgressView().controlSize(.mini)
@@ -346,7 +346,7 @@ private struct ProposalCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(proposal.summary).font(.system(size: 13, weight: .semibold))
                 if proposal.risk == .destructive, state == .pending {
-                    Text("会改动已有内容，确认后可以撤销").font(.system(size: 11.5)).foregroundStyle(.secondary)
+                    Text(L("会改动已有内容，确认后可以撤销")).font(.system(size: 11.5)).foregroundStyle(.secondary)
                 }
             }
 
@@ -355,7 +355,7 @@ private struct ProposalCard: View {
                     ChangeRow(item: item)
                 }
                 if proposal.items.count > visibleItems.count {
-                    Text("还有 \(proposal.items.count - visibleItems.count) 项").font(.system(size: 11.5)).foregroundStyle(.secondary)
+                    Text(L("还有 \(proposal.items.count - visibleItems.count) 项")).font(.system(size: 11.5)).foregroundStyle(.secondary)
                 }
             }
 
@@ -372,19 +372,19 @@ private struct ProposalCard: View {
         switch state {
         case .pending:
             HStack(spacing: 8) {
-                Button("拒绝") { model.resolve(proposal, decision: .rejected(reason: nil)) }
+                Button(L("拒绝")) { model.resolve(proposal, decision: .rejected(reason: nil)) }
                 Spacer()
                 if proposal.risk == .reversible {
-                    Button("本次都允许") { model.resolve(proposal, decision: .approvedForSession) }
+                    Button(L("本次都允许")) { model.resolve(proposal, decision: .approvedForSession) }
                 }
-                Button("允许") { model.resolve(proposal, decision: .approved) }
+                Button(L("允许")) { model.resolve(proposal, decision: .approved) }
                     .buttonStyle(.borderedProminent)
             }
             .controlSize(.small)
         case .approved:
-            Text("已允许").font(.system(size: 11.5)).foregroundStyle(.secondary)
+            Text(L("已允许")).font(.system(size: 11.5)).foregroundStyle(.secondary)
         case .rejected:
-            Text("已拒绝").font(.system(size: 11.5)).foregroundStyle(.secondary)
+            Text(L("已拒绝")).font(.system(size: 11.5)).foregroundStyle(.secondary)
         }
     }
 }
@@ -431,11 +431,11 @@ private struct FailureCard: View {
             }
             HStack(spacing: 12) {
                 if failure.canRetry {
-                    Button("重试") { model.retry() }
+                    Button(L("重试")) { model.retry() }
                         .foregroundStyle(Color.accentColor)
                 }
                 if failure.suggestsModelSettings {
-                    Button("模型设置") { model.onOpenModelSettings?() }
+                    Button(L("模型设置")) { model.onOpenModelSettings?() }
                         .foregroundStyle(.secondary)
                 }
             }
@@ -454,15 +454,15 @@ private struct AgentEmptyState: View {
     var model: AgentModel
 
     private let suggestions = [
-        "把这周复制的链接按主题分到 Pinboard",
-        "找出上个月复制的 nginx 配置",
-        "清理重复项和 30 天没用过的截图",
+        L("把这周复制的链接按主题分到 Pinboard"),
+        L("找出上个月复制的 nginx 配置"),
+        L("清理重复项和 30 天没用过的截图"),
     ]
 
     var body: some View {
         if model.isConfigured {
             VStack(alignment: .leading, spacing: 10) {
-                Text("整理、查找或改写你的剪贴板").font(.system(size: 15, weight: .semibold))
+                Text(L("整理、查找或改写你的剪贴板")).font(.system(size: 15, weight: .semibold))
                 VStack(alignment: .leading, spacing: 2) {
                     ForEach(suggestions, id: \.self) { text in
                         SuggestionRow(text: text) { model.composer = text }
@@ -472,12 +472,12 @@ private struct AgentEmptyState: View {
             }
         } else {
             VStack(alignment: .leading, spacing: 8) {
-                Text("先连接一个模型").font(.system(size: 15, weight: .semibold))
-                Text("可以用云端服务，也可以用 Ollama、LM Studio 等本地模型。本地模型不会把内容发出这台 Mac。")
+                Text(L("先连接一个模型")).font(.system(size: 15, weight: .semibold))
+                Text(L("可以用云端服务，也可以用 Ollama、LM Studio 等本地模型。本地模型不会把内容发出这台 Mac。"))
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .lineSpacing(3)
-                Button("添加模型") { model.onOpenModelSettings?() }
+                Button(L("添加模型")) { model.onOpenModelSettings?() }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
                     .padding(.top, 2)
@@ -530,7 +530,7 @@ private struct AgentComposer: View {
                 .scrollIndicators(.hidden)
             }
             HStack(alignment: .bottom, spacing: 8) {
-                TextField(model.isConfigured ? "想让 Agent 做什么？" : "添加模型后可用", text: $model.composer, axis: .vertical)
+                TextField(model.isConfigured ? L("想让 Agent 做什么？") : L("添加模型后可用"), text: $model.composer, axis: .vertical)
                     .textFieldStyle(.plain)
                     .font(.system(size: 13))
                     .lineLimit(1...8)
@@ -563,7 +563,7 @@ private struct AgentComposer: View {
                     .background(Color.primary.opacity(0.09), in: Circle())
             }
             .buttonStyle(PressableStyle())
-            .help("停止")
+            .help(L("停止"))
         } else {
             Button {
                 model.send()
@@ -576,7 +576,7 @@ private struct AgentComposer: View {
             }
             .buttonStyle(PressableStyle())
             .disabled(!canSend)
-            .help("发送")
+            .help(L("发送"))
         }
     }
 }
@@ -593,7 +593,7 @@ private struct AttachmentChip: View {
                 Image(systemName: "xmark").font(.system(size: 8, weight: .bold)).foregroundStyle(.secondary)
             }
             .buttonStyle(PressableStyle())
-            .help("移除")
+            .help(L("移除"))
         }
         .font(.system(size: 11.5))
         .padding(.horizontal, 8)

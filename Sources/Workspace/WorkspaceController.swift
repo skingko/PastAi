@@ -20,6 +20,8 @@ public final class WorkspaceController: NSObject, NSWindowDelegate {
     private let navigation = SettingsNavigation()
 
     public var onHotKeyChanged: ((HotKeyCombo) -> Void)?
+    /// Called after clips arrive from another app, so thumbnails and text recognition can catch up.
+    public var onImported: (() -> Void)?
 
     public init(
         service: ClipService,
@@ -111,7 +113,7 @@ public final class WorkspaceController: NSObject, NSWindowDelegate {
                     for try await event in client.stream(llmRequest) {
                         switch event {
                         case .textDelta(let delta): continuation.yield(delta)
-                        case .stopped(.refusal): throw LLMError.invalidResponse("模型拒绝处理这段内容")
+                        case .stopped(.refusal): throw LLMError.invalidResponse(L("模型拒绝处理这段内容"))
                         default: break
                         }
                     }
@@ -130,7 +132,7 @@ public final class WorkspaceController: NSObject, NSWindowDelegate {
     }
 
     private func askAgentForExtension() {
-        agent.composer = "帮我写一个浮条组件："
+        agent.composer = L("帮我写一个浮条组件：")
         showLibrary()
     }
 
@@ -143,12 +145,13 @@ public final class WorkspaceController: NSObject, NSWindowDelegate {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "PastAi 设置"
+            window.title = L("PastAi 设置")
             window.isReleasedWhenClosed = false
             let view = SettingsHost(
                 settings: settings, agent: agentSettings, service: service, library: extensions, market: market, navigation: navigation,
                 onHotKeyChanged: { [weak self] combo in self?.onHotKeyChanged?(combo) },
-                onAskAgent: { [weak self] in self?.askAgentForExtension() }
+                onAskAgent: { [weak self] in self?.askAgentForExtension() },
+                onImported: { [weak self] in self?.onImported?() }
             )
             window.contentView = NSHostingView(rootView: view)
             window.delegate = self
@@ -275,8 +278,16 @@ public final class WorkspaceController: NSObject, NSWindowDelegate {
         try? bitmap.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
     }
 
+    public func debugWindow(_ name: String) -> NSWindow? {
+        name == "settings" ? settingsWindow : mainWindow
+    }
+
+    public func debugWindowNumber(_ name: String) -> Int {
+        debugWindow(name)?.windowNumber ?? 0
+    }
+
     public func debugConfigure(baseURL: String, model: String) {
-        let provider = ModelProvider(name: "本地测试", format: .openAICompatible, baseURL: baseURL, models: [model], supportsVision: false)
+        let provider = ModelProvider(name: L("本地测试"), format: .openAICompatible, baseURL: baseURL, models: [model], supportsVision: false)
         agentSettings.providers = [provider]
         agentSettings.mainModel = ModelRef(providerID: provider.id, model: model)
     }
@@ -328,11 +339,12 @@ private struct SettingsHost: View {
     @Bindable var navigation: SettingsNavigation
     var onHotKeyChanged: (HotKeyCombo) -> Void
     var onAskAgent: () -> Void
+    var onImported: () -> Void
 
     var body: some View {
         SettingsView(
             settings: settings, agent: agent, service: service, library: library, market: market,
-            onHotKeyChanged: onHotKeyChanged, onAskAgent: onAskAgent, tab: $navigation.tab
+            onHotKeyChanged: onHotKeyChanged, onAskAgent: onAskAgent, onImported: onImported, tab: $navigation.tab
         )
     }
 }

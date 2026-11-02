@@ -1,4 +1,5 @@
 import AppKit
+import ClipCore
 import ClipExtensions
 import Observation
 import SwiftUI
@@ -128,7 +129,7 @@ private struct OverflowAnchor: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSButton {
         let button = NSButton(
-            image: NSImage(systemSymbolName: "ellipsis", accessibilityDescription: "更多") ?? NSImage(),
+            image: NSImage(systemSymbolName: "ellipsis", accessibilityDescription: L("更多")) ?? NSImage(),
             target: context.coordinator, action: #selector(Coordinator.press(_:))
         )
         button.isBordered = false
@@ -233,20 +234,20 @@ struct ResultView: View {
         case .message(let text):
             Text(text).font(.system(size: 13)).lineSpacing(3).fixedSize(horizontal: false, vertical: true)
             if let open = model.onOpenSettings {
-                Button("打开设置", action: open).controlSize(.small)
+                Button(L("打开设置"), action: open).controlSize(.small)
             }
         case .failed(let text):
             Text(text).font(.system(size: 12.5)).foregroundStyle(.secondary).lineSpacing(3).fixedSize(horizontal: false, vertical: true)
             if let open = model.onOpenSettings {
-                Button("模型设置", action: open).controlSize(.small)
+                Button(L("模型设置"), action: open).controlSize(.small)
             }
         case .needsConsent(let provider):
-            Text("这段文字会发送给 \(provider)。使用本地模型时内容不会离开这台 Mac。")
+            Text(L("这段文字会发送给 \(provider)。使用本地模型时内容不会离开这台 Mac。"))
                 .font(.system(size: 13)).lineSpacing(3).fixedSize(horizontal: false, vertical: true)
             HStack {
                 Spacer()
-                Button("取消", action: model.onClose)
-                Button("允许", action: model.onConsent).buttonStyle(.borderedProminent)
+                Button(L("取消"), action: model.onClose)
+                Button(L("允许"), action: model.onConsent).buttonStyle(.borderedProminent)
             }
             .controlSize(.small)
         }
@@ -255,14 +256,14 @@ struct ResultView: View {
     private var footer: some View {
         HStack(spacing: 8) {
             if model.isOnClipboard {
-                Label("已加入剪贴板", systemImage: "checkmark").font(.system(size: 11.5)).foregroundStyle(.secondary)
+                Label(L("已加入剪贴板"), systemImage: "checkmark").font(.system(size: 11.5)).foregroundStyle(.secondary)
             }
             Spacer()
             if model.canInsert {
-                Button("插入", action: model.onInsert)
+                Button(L("插入"), action: model.onInsert)
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
-                    .help("替换选中的原文")
+                    .help(L("替换选中的原文"))
             }
         }
     }

@@ -76,9 +76,9 @@ public enum AgentToolError: Error, LocalizedError, Equatable {
 
     public var errorDescription: String? {
         switch self {
-        case .badArguments(let detail): "参数错误：\(detail)"
-        case .notAccessible(let id): "条目 \(id) 不存在或不可访问"
-        case .pinboardNotAccessible(let id): "Pinboard \(id) 不存在或不可访问"
+        case .badArguments(let detail): "Bad arguments: \(detail)"
+        case .notAccessible(let id): "Clip \(id) does not exist or is not accessible"
+        case .pinboardNotAccessible(let id): "Pinboard \(id) does not exist or is not accessible"
         }
     }
 }

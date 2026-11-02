@@ -45,7 +45,6 @@ public final class AppSettings {
 
     public var retentionDays: Int { didSet { defaults.set(retentionDays, forKey: "retentionDays") } }
     public var mediaCapGB: Int { didSet { defaults.set(mediaCapGB, forKey: "mediaCapGB") } }
-    public var snapshotLimitMB: Int { didSet { defaults.set(snapshotLimitMB, forKey: "snapshotLimitMB") } }
     public var ignoreConcealed: Bool { didSet { defaults.set(ignoreConcealed, forKey: "ignoreConcealed") } }
     public var ignoredBundleIDs: [String] { didSet { defaults.set(ignoredBundleIDs, forKey: "ignoredBundleIDs") } }
     public var pausedUntil: Date? { didSet { defaults.set(pausedUntil, forKey: "pausedUntil") } }
@@ -65,7 +64,6 @@ public final class AppSettings {
         defaults.register(defaults: [
             "retentionDays": 90,
             "mediaCapGB": 20,
-            "snapshotLimitMB": 200,
             "ignoreConcealed": true,
             "ignoredBundleIDs": Self.defaultIgnoredApps,
             "selectionBarEnabled": true,
@@ -73,7 +71,6 @@ public final class AppSettings {
         ])
         retentionDays = defaults.integer(forKey: "retentionDays")
         mediaCapGB = defaults.integer(forKey: "mediaCapGB")
-        snapshotLimitMB = defaults.integer(forKey: "snapshotLimitMB")
         ignoreConcealed = defaults.bool(forKey: "ignoreConcealed")
         ignoredBundleIDs = defaults.stringArray(forKey: "ignoredBundleIDs") ?? Self.defaultIgnoredApps
         pausedUntil = defaults.object(forKey: "pausedUntil") as? Date
@@ -100,6 +97,4 @@ public final class AppSettings {
     public var retentionPolicy: RetentionPolicy {
         RetentionPolicy(historyDays: retentionDays, mediaCapBytes: Int64(mediaCapGB) * 1_073_741_824)
     }
-
-    public var snapshotLimitBytes: Int64 { Int64(snapshotLimitMB) * 1_048_576 }
 }

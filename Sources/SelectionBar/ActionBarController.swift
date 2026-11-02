@@ -217,7 +217,7 @@ public final class ActionBarController {
 
     private func openApp(bundleID: String, copyFirst: Bool, text: String, item: InstalledExtension) throws {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
-            showMessage("没有找到 \(item.manifest.name.localized)，请先安装。", for: item)
+            showMessage(L("没有找到 \(item.manifest.name.localized)，请先安装。"), for: item)
             return
         }
         if copyFirst { writeToClipboard(text) }
@@ -326,7 +326,7 @@ public final class ActionBarController {
     private func finishAI(canInsert: Bool) {
         let text = resultModel.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {
-            resultModel.phase = .failed("模型没有返回内容。")
+            resultModel.phase = .failed(L("模型没有返回内容。"))
             layoutResult()
             return
         }
@@ -341,7 +341,7 @@ public final class ActionBarController {
     private func failAI(_ error: any Error) {
         switch error as? AIActionError {
         case .notConfigured:
-            resultModel.phase = .message("先在设置里添加一个模型，才能使用 AI 组件。")
+            resultModel.phase = .message(L("先在设置里添加一个模型，才能使用 AI 组件。"))
             resultModel.onOpenSettings = { [weak self] in self?.openSettingsFromResult() }
         case .needsConsent(let provider):
             resultModel.phase = .needsConsent(provider)

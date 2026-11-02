@@ -43,7 +43,10 @@ public final class ClipService: Sendable {
         public var isNew: Bool
     }
 
-    public func ingest(_ draft: CaptureDraft, now: Date = Date()) async throws -> IngestResult {
+    /// `importedAt` marks a clip brought in from another app: `now` is then its original copy time.
+    /// It counts as used at the moment of import, so history retention measures from there rather than
+    /// expiring old clips the moment they arrive, and a clip already here keeps its newer timestamp.
+    public func ingest(_ draft: CaptureDraft, now: Date = Date(), importedAt: Date? = nil) async throws -> IngestResult {
         // Blob writes sit outside the transaction: they are content-addressed, so a rollback only leaves
         // an orphan for the sweep, and a slow disk must not hold the write lock.
         var representations: [Representation] = []
@@ -65,6 +68,7 @@ public final class ClipService: Sendable {
         let frozen = representations
         let result = try await database.write { db -> IngestResult in
             if let existing = try db.first("SELECT id FROM clip WHERE contentHash = ?", [draft.contentHash], { $0.int64(0) }) {
+                if importedAt != nil { return IngestResult(clipID: existing, isNew: false) }
                 try db.execute(
                     """
                     UPDATE clip SET lastCopiedAt = ?, copyCount = copyCount + 1, deletedAt = NULL,
@@ -79,12 +83,12 @@ public final class ClipService: Sendable {
             try db.execute(
                 """
                 INSERT INTO clip(kind, plainText, textLength, sourceBundleID, sourceAppName, contentHash, byteSize,
-                    createdAt, lastCopiedAt, isSensitive, metadataJSON)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    createdAt, lastCopiedAt, lastUsedAt, isSensitive, metadataJSON)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     draft.kind.rawValue, draft.plainText, draft.plainText?.count ?? 0, draft.source.bundleID, draft.source.name,
-                    draft.contentHash, draft.byteSize, now, now, draft.isSensitive, metadata,
+                    draft.contentHash, draft.byteSize, now, now, importedAt, draft.isSensitive, metadata,
                 ]
             )
             let id = db.lastInsertRowID
@@ -215,7 +219,7 @@ public final class ClipService: Sendable {
             let base = "FROM clip WHERE deletedAt IS NULL \(visibility)"
             let byKind = try db.query("SELECT kind, count(*) \(base) GROUP BY kind") { ($0.string(0), $0.int(1)) }
             let bySource = try db.query(
-                "SELECT coalesce(sourceAppName, '未知'), count(*) \(base) GROUP BY 1 ORDER BY 2 DESC LIMIT 20"
+                "SELECT coalesce(sourceAppName, 'Unknown'), count(*) \(base) GROUP BY 1 ORDER BY 2 DESC LIMIT 20"
             ) { ($0.string(0), $0.int(1)) }
             return LibraryStats(
                 total: Int(try db.scalarInt("SELECT count(*) \(base)")),
@@ -252,10 +256,12 @@ public final class ClipService: Sendable {
 
     // MARK: Pasteboard bookkeeping
 
+    /// Using a clip counts as copying it again, which is what brings it back to the first card.
     public func recordUse(clipID: Int64, now: Date = Date()) async throws {
         try await database.write { db in
-            try db.execute("UPDATE clip SET useCount = useCount + 1, lastUsedAt = ? WHERE id = ?", [now, clipID])
+            try db.execute("UPDATE clip SET useCount = useCount + 1, lastUsedAt = ?, lastCopiedAt = ? WHERE id = ?", [now, now, clipID])
         }
+        notify(.updated(clipID))
     }
 
     /// Reads a representation regardless of whether it lives inline or in the blob store.
@@ -264,21 +270,24 @@ public final class ClipService: Sendable {
         return try representation.blobHash.map { try blobs.read($0) }
     }
 
-    /// Prefers the live file so pastes pick up the current version, then the snapshot.
-    public func resolveURL(for file: ClipFile) -> URL? {
+    /// Where the file is now: its original path, or wherever its bookmark says it moved. The Trash counts as gone.
+    public func liveURL(for file: ClipFile) -> URL? {
         let manager = FileManager.default
         if manager.fileExists(atPath: file.originalPath) { return URL(fileURLWithPath: file.originalPath) }
-        if let bookmark = file.bookmark {
-            var stale = false
-            if let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &stale), manager.fileExists(atPath: url.path) {
-                return url
-            }
-        }
-        if let snapshot = file.snapshotPath {
-            let url = paths.files.appending(path: snapshot)
-            if manager.fileExists(atPath: url.path) { return url }
-        }
-        return nil
+        guard let bookmark = file.bookmark else { return nil }
+        var stale = false
+        // A paste must not stall on mounting a disconnected share or showing a dialog.
+        guard let url = try? URL(resolvingBookmarkData: bookmark, options: [.withoutUI, .withoutMounting], bookmarkDataIsStale: &stale),
+              manager.fileExists(atPath: url.path), !url.path.contains("/.Trash/") else { return nil }
+        return url
+    }
+
+    /// Prefers the live file so pastes pick up the current version, then a kept screenshot.
+    public func resolveURL(for file: ClipFile) -> URL? {
+        if let live = liveURL(for: file) { return live }
+        guard let snapshot = file.snapshotPath else { return nil }
+        let url = paths.files.appending(path: snapshot)
+        return FileManager.default.fileExists(atPath: url.path) ? url : nil
     }
 
     public func setSnapshot(fileID: Int64, relativePath: String) async throws {
@@ -399,7 +408,7 @@ public final class ClipService: Sendable {
             conditions.append("pc.pinboardID = ?")
             plan.arguments.append(id)
             conditions.append("clip.deletedAt IS NULL")
-            plan.order = "pc.addedAt DESC, clip.id DESC"
+            plan.order = "max(pc.addedAt, coalesce(clip.lastUsedAt, 0)) DESC, clip.lastCopiedAt DESC, clip.id DESC"
         case .trash:
             conditions.append("clip.deletedAt IS NOT NULL")
             plan.order = "clip.deletedAt DESC"
@@ -490,21 +499,19 @@ public final class ClipService: Sendable {
                 inlineData: row.optionalData(3), blobHash: row.optionalString(4), byteSize: row.int64(5)
             )
         }
-        let files = try db.query(
-            """
-            SELECT id, clipID, position, originalPath, bookmark, snapshotPath, fileName, uti, byteSize, isDirectory
-            FROM clipFile WHERE clipID = ? ORDER BY position
-            """,
-            [id]
-        ) { row in
-            ClipFile(
-                id: row.int64(0), clipID: row.int64(1), position: row.int(2), originalPath: row.string(3),
-                bookmark: row.optionalData(4), snapshotPath: row.optionalString(5), fileName: row.string(6),
-                uti: row.optionalString(7), byteSize: row.int64(8), isDirectory: row.bool(9)
-            )
-        }
+        let files = try db.query("SELECT \(fileColumns) FROM clipFile WHERE clipID = ? ORDER BY position", [id], decodeFile)
         let boards = try db.query("SELECT pinboardID FROM pinboardClip WHERE clipID = ?", [id]) { $0.int64(0) }
         return ClipDetail(clip: clip, representations: representations, files: files, pinboardIDs: boards, tags: try tags(db, clipID: id))
+    }
+
+    static let fileColumns = "id, clipID, position, originalPath, bookmark, snapshotPath, fileName, uti, byteSize, isDirectory"
+
+    static func decodeFile(_ row: Row) -> ClipFile {
+        ClipFile(
+            id: row.int64(0), clipID: row.int64(1), position: row.int(2), originalPath: row.string(3),
+            bookmark: row.optionalData(4), snapshotPath: row.optionalString(5), fileName: row.string(6),
+            uti: row.optionalString(7), byteSize: row.int64(8), isDirectory: row.bool(9)
+        )
     }
 
     static func tags(_ db: SQLiteConnection, clipID: Int64) throws -> [String] {

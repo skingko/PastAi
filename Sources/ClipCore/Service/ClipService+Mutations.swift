@@ -68,7 +68,7 @@ extension ClipService {
     }
 
     public func createPinboard(name: String, colorHex: String? = nil) async throws -> Int64 {
-        let result = try await apply([.createPinboard(name: name, colorHex: colorHex)], source: .user, summary: "新建 Pinboard \(name)")
+        let result = try await apply([.createPinboard(name: name, colorHex: colorHex)], source: .user, summary: L("新建 Pinboard \(name)"))
         return result.createdPinboardIDs[0]
     }
 

@@ -1,3 +1,4 @@
+import ClipCore
 import Foundation
 
 /// Text with an optional Chinese variant. Decodes from a plain string or `{"en": ..., "zh": ...}`.
@@ -35,8 +36,7 @@ public struct LocalizedText: Codable, Sendable, Hashable {
     private enum CodingKeys: String, CodingKey { case en, zh }
 
     public var localized: String {
-        let prefersChinese = Locale.preferredLanguages.first?.hasPrefix("zh") ?? false
-        return prefersChinese ? (zh ?? en) : en
+        AppLanguage.current == .chinese ? (zh ?? en) : en
     }
 }
 
@@ -95,6 +95,15 @@ public struct ExtensionOption: Codable, Sendable, Hashable, Identifiable {
     public var label: LocalizedText
     public var placeholder: LocalizedText?
     public var defaultValue: String?
+    /// `defaultValue` with `$systemLanguage` and `$secondaryLanguage` filled in, which is how Translate
+    /// aims at the language of the Mac it runs on.
+    public var resolvedDefault: String? {
+        switch defaultValue {
+        case "$systemLanguage": AppLanguage.current.nativeName
+        case "$secondaryLanguage": AppLanguage.current.secondary.nativeName
+        default: defaultValue
+        }
+    }
     public var required: Bool?
     public var choices: [Choice]?
 
@@ -281,15 +290,15 @@ public enum ExtensionError: Error, LocalizedError, Equatable {
 
     public var errorDescription: String? {
         switch self {
-        case .unsupportedAction(let type): "不支持的动作类型：\(type)。可用类型：url、app、copy、paste、script、ai"
-        case .invalidManifest(let detail): "组件定义无效：\(detail)"
-        case .invalidURL(let url): "生成的地址无效：\(url)"
-        case .blockedScheme(let scheme): "组件不允许使用 \(scheme): 地址"
-        case .missingOption(let label): "请先在设置里填写“\(label.localized)”"
-        case .scriptFailed(let detail): "脚本运行失败：\(detail)"
-        case .scriptTimedOut: "脚本运行超时，已被终止"
-        case .integrityMismatch(let file): "下载的文件校验失败：\(file)"
-        case .notLocal(let id): "只能修改本地自定义组件，\(id) 不是"
+        case .unsupportedAction(let type): L("不支持的动作类型：\(type)。可用类型：url、app、copy、paste、script、ai")
+        case .invalidManifest(let detail): L("组件定义无效：\(detail)")
+        case .invalidURL(let url): L("生成的地址无效：\(url)")
+        case .blockedScheme(let scheme): L("组件不允许使用 \(scheme): 地址")
+        case .missingOption(let label): L("请先在设置里填写“\(label.localized)”")
+        case .scriptFailed(let detail): L("脚本运行失败：\(detail)")
+        case .scriptTimedOut: L("脚本运行超时，已被终止")
+        case .integrityMismatch(let file): L("下载的文件校验失败：\(file)")
+        case .notLocal(let id): L("只能修改本地自定义组件，\(id) 不是")
         }
     }
 }

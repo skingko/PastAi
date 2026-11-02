@@ -1,3 +1,4 @@
+import ClipCore
 import Foundation
 import Observation
 import Security
@@ -9,7 +10,7 @@ public struct ModelProvider: Codable, Sendable, Hashable, Identifiable {
         public var id: String { rawValue }
         public var label: String {
             switch self {
-            case .openAICompatible: "OpenAI 兼容"
+            case .openAICompatible: L("OpenAI 兼容")
             case .anthropic: "Anthropic"
             }
         }
@@ -49,9 +50,9 @@ public struct ModelProvider: Codable, Sendable, Hashable, Identifiable {
         ModelProvider(name: "OpenAI", format: .openAICompatible, baseURL: "https://api.openai.com/v1"),
         ModelProvider(name: "Google Gemini", format: .openAICompatible, baseURL: "https://generativelanguage.googleapis.com/v1beta/openai"),
         ModelProvider(name: "DeepSeek", format: .openAICompatible, baseURL: "https://api.deepseek.com/v1", supportsVision: false),
-        ModelProvider(name: "通义千问", format: .openAICompatible, baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1"),
+        ModelProvider(name: L("通义千问"), format: .openAICompatible, baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1"),
         ModelProvider(name: "Kimi", format: .openAICompatible, baseURL: "https://api.moonshot.cn/v1"),
-        ModelProvider(name: "智谱 GLM", format: .openAICompatible, baseURL: "https://open.bigmodel.cn/api/paas/v4"),
+        ModelProvider(name: L("智谱 GLM"), format: .openAICompatible, baseURL: "https://open.bigmodel.cn/api/paas/v4"),
         ModelProvider(name: "OpenRouter", format: .openAICompatible, baseURL: "https://openrouter.ai/api/v1"),
         ModelProvider(name: "Ollama", format: .openAICompatible, baseURL: "http://127.0.0.1:11434/v1"),
         ModelProvider(name: "LM Studio", format: .openAICompatible, baseURL: "http://127.0.0.1:1234/v1"),

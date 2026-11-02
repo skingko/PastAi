@@ -1,13 +1,17 @@
+import ClipCore
 import Foundation
 import JavaScriptCore
 
 public struct ScriptInput: Codable, Sendable, Hashable {
     public var text: String
     public var options: [String: String]
+    /// The app language, `en` or `zh`, for scripts that show text of their own.
+    public var language: String
 
-    public init(text: String, options: [String: String] = [:]) {
+    public init(text: String, options: [String: String] = [:], language: String = AppLanguage.current.code) {
         self.text = text
         self.options = options
+        self.language = language
     }
 }
 
@@ -34,7 +38,7 @@ public struct ScriptOutput: Codable, Sendable, Hashable {
 /// process APIs, so a script can only compute on its input and hand back a `ScriptOutput`.
 public enum ScriptEngine {
     public static func evaluate(source: String, input: ScriptInput) throws -> ScriptOutput {
-        guard let context = JSContext() else { throw ExtensionError.scriptFailed("无法创建脚本环境") }
+        guard let context = JSContext() else { throw ExtensionError.scriptFailed(L("无法创建脚本环境")) }
         var failure: String?
         context.exceptionHandler = { _, exception in
             failure = exception?.toString()
@@ -44,11 +48,11 @@ public enum ScriptEngine {
         if let failure { throw ExtensionError.scriptFailed(failure) }
 
         guard let run = context.objectForKeyedSubscript("run"), run.isObject, !run.isUndefined else {
-            throw ExtensionError.scriptFailed("脚本必须定义 run(input) 函数")
+            throw ExtensionError.scriptFailed(L("脚本必须定义 run(input) 函数"))
         }
-        let argument: [String: Any] = ["text": input.text, "options": input.options]
+        let argument: [String: Any] = ["text": input.text, "options": input.options, "language": input.language]
         guard let result = run.call(withArguments: [argument]) else {
-            throw ExtensionError.scriptFailed("run 没有返回结果")
+            throw ExtensionError.scriptFailed(L("run 没有返回结果"))
         }
         if let failure { throw ExtensionError.scriptFailed(failure) }
         return output(from: result)

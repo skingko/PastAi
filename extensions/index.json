@@ -524,7 +524,7 @@
     {
       "id": "io.github.skingko.pastai.translate",
       "folder": "translate",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "name": {
         "en": "Translate",
         "zh": "翻译"
@@ -541,7 +541,7 @@
       "files": [
         {
           "path": "extension.json",
-          "sha256": "92e99e12df8a8a6cbfd014efa40ca5c28c67e47b227fe58ca63275ff6c96000f"
+          "sha256": "5bea2773f27403e99c43250297e1474339ba6f86e227ea6b110dd3e4959e9718"
         }
       ]
     },
@@ -660,7 +660,7 @@
     {
       "id": "io.github.skingko.pastai.word-count",
       "folder": "word-count",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "name": {
         "en": "Word Count",
         "zh": "字数统计"
@@ -677,11 +677,11 @@
       "files": [
         {
           "path": "extension.json",
-          "sha256": "4a0cdc4f3822a541ce8128c81d360e7e9c1b5777e03b58f7ebb88b48b1652cd5"
+          "sha256": "7cf892102b6077f68a340e1c5187b4550b184e4c1a15d0d30fc17fb39084446a"
         },
         {
           "path": "script.js",
-          "sha256": "f29feb5cfa7dc43b060f20a73399a149ab649eafcc79a27317a206269d637ba2"
+          "sha256": "06a817d114fb427c2312207f443d491b37379a6785aee846dfa7c3e5b1dd36a8"
         }
       ]
     },

@@ -41,10 +41,10 @@ extension ClipKind {
 enum RelativeTime {
     static func describe(_ date: Date, now: Date = Date()) -> String {
         let seconds = now.timeIntervalSince(date)
-        if seconds < 60 { return "刚刚" }
-        if seconds < 3_600 { return "\(Int(seconds / 60)) 分钟前" }
-        if seconds < 86_400 { return "\(Int(seconds / 3_600)) 小时前" }
-        if seconds < 7 * 86_400 { return "\(Int(seconds / 86_400)) 天前" }
+        if seconds < 60 { return L("刚刚") }
+        if seconds < 3_600 { return L("\(Int(seconds / 60)) 分钟前") }
+        if seconds < 86_400 { return L("\(Int(seconds / 3_600)) 小时前") }
+        if seconds < 7 * 86_400 { return L("\(Int(seconds / 86_400)) 天前") }
         return date.formatted(.dateTime.month().day())
     }
 }
@@ -154,7 +154,7 @@ struct ClipCard: View {
             }
             Spacer(minLength: 4)
             if clip.isSensitive || clip.aiHidden {
-                Image(systemName: "eye.slash").font(.system(size: 10)).help("对 AI 隐藏")
+                Image(systemName: "eye.slash").font(.system(size: 10)).help(L("对 AI 隐藏"))
             }
             if let icon = ImageCache.shared.icon(forBundleID: clip.sourceBundleID) {
                 Image(nsImage: icon).resizable().frame(width: 20, height: 20)
@@ -183,7 +183,7 @@ struct ClipCard: View {
         let size = ByteCountFormatter.string(fromByteCount: clip.byteSize, countStyle: .file)
         switch clip.kind {
         case .text, .code, .link, .color:
-            return "\(clip.textLength) 字符"
+            return L("\(clip.textLength) 字符")
         case .image:
             if let width = clip.metadata.pixelWidth, let height = clip.metadata.pixelHeight {
                 return "\(width)×\(height) · \(size)"
@@ -194,7 +194,7 @@ struct ClipCard: View {
             return [duration, size].compactMap(\.self).joined(separator: " · ")
         case .file:
             let count = clip.metadata.fileCount ?? 1
-            return count > 1 ? "\(count) 个文件 · \(size)" : size
+            return count > 1 ? L("\(count) 个文件 · \(size)") : size
         case .other:
             return size
         }
@@ -251,7 +251,7 @@ private struct ClipBody: View {
         case .other:
             VStack(spacing: 6) {
                 Image(systemName: "shippingbox").font(.system(size: 30)).foregroundStyle(.secondary)
-                Text("应用私有格式").font(.system(size: 12)).foregroundStyle(.secondary)
+                Text(L("应用私有格式")).font(.system(size: 12)).foregroundStyle(.secondary)
                 Text(clip.sourceAppName ?? "").font(.system(size: 11)).foregroundStyle(.tertiary)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -310,9 +310,9 @@ private struct FileBody: View {
             } else {
                 Image(systemName: "doc.fill").font(.system(size: 42)).foregroundStyle(.secondary)
             }
-            Text(names.first ?? "文件").font(.system(size: 12)).lineLimit(2).multilineTextAlignment(.center)
+            Text(names.first ?? L("文件")).font(.system(size: 12)).lineLimit(2).multilineTextAlignment(.center)
             if names.count > 1 {
-                Text("等 \(names.count) 项").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text(L("等 \(names.count) 项")).font(.system(size: 11)).foregroundStyle(.secondary)
             }
         }
         .padding(10)

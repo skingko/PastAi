@@ -28,6 +28,8 @@ final class LibraryModel {
     private(set) var pinboardCounts: [Int64: Int] = [:]
     private(set) var tags: [TagSummary] = []
     private(set) var detail: ClipDetail?
+    /// Set when a copy could not happen, and shown as an alert.
+    var notice: String?
 
     @ObservationIgnored private var reloadTask: Task<Void, Never>?
     @ObservationIgnored private var changesTask: Task<Void, Never>?
@@ -122,27 +124,27 @@ final class LibraryModel {
         if newTitle != current.clip.title { mutations.append(.setTitle(clipID: id, title: newTitle)) }
         if let text, text != current.clip.plainText { mutations.append(.setText(clipID: id, text: text)) }
         guard !mutations.isEmpty else { return }
-        Task { try? await service.apply(mutations, source: .user, summary: "编辑条目") }
+        Task { try? await service.apply(mutations, source: .user, summary: L("编辑条目")) }
     }
 
     func setTags(id: Int64, tags: [String]) {
-        Task { try? await service.apply([.setTags(clipID: id, tags: tags)], source: .user, summary: "修改标签") }
+        Task { try? await service.apply([.setTags(clipID: id, tags: tags)], source: .user, summary: L("修改标签")) }
     }
 
     func setAIHidden(id: Int64, hidden: Bool) {
-        Task { try? await service.apply([.setAIHidden(clipID: id, hidden: hidden)], source: .user, summary: "调整 AI 可见性") }
+        Task { try? await service.apply([.setAIHidden(clipID: id, hidden: hidden)], source: .user, summary: L("调整 AI 可见性")) }
     }
 
     func delete(_ ids: Set<Int64>) {
         guard !ids.isEmpty else { return }
         selection = []
-        Task { try? await service.apply(ids.map { .softDelete(clipID: $0) }, source: .user, summary: "删除 \(ids.count) 项") }
+        Task { try? await service.apply(ids.map { .softDelete(clipID: $0) }, source: .user, summary: L("删除 \(ids.count) 项")) }
     }
 
     func restore(_ ids: Set<Int64>) {
         guard !ids.isEmpty else { return }
         selection = []
-        Task { try? await service.apply(ids.map { .restore(clipID: $0) }, source: .user, summary: "恢复 \(ids.count) 项") }
+        Task { try? await service.apply(ids.map { .restore(clipID: $0) }, source: .user, summary: L("恢复 \(ids.count) 项")) }
     }
 
     func emptyTrash() {
@@ -156,19 +158,25 @@ final class LibraryModel {
             for id in ordered {
                 if let detail = try? await service.detail(id: id) { details.append(detail) }
             }
-            _ = try? writer.write(details, mode: .original)
+            do {
+                guard try writer.write(details, mode: .original) > 0 else { return }
+            } catch {
+                if error is MissingFilesError { notice = error.localizedDescription }
+                return
+            }
+            for id in ordered.reversed() { try? await service.recordUse(clipID: id) }
         }
     }
 
     func pin(_ ids: Set<Int64>, to board: Int64) {
         Task {
-            try? await service.apply(ids.map { .addToPinboard(clipID: $0, pinboardID: board) }, source: .user, summary: "加入 Pinboard")
+            try? await service.apply(ids.map { .addToPinboard(clipID: $0, pinboardID: board) }, source: .user, summary: L("加入 Pinboard"))
         }
     }
 
     func unpin(_ ids: Set<Int64>, from board: Int64) {
         Task {
-            try? await service.apply(ids.map { .removeFromPinboard(clipID: $0, pinboardID: board) }, source: .user, summary: "移出 Pinboard")
+            try? await service.apply(ids.map { .removeFromPinboard(clipID: $0, pinboardID: board) }, source: .user, summary: L("移出 Pinboard"))
         }
     }
 

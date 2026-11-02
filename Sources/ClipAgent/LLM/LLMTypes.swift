@@ -1,3 +1,4 @@
+import ClipCore
 import Foundation
 
 public struct LLMImage: Codable, Sendable, Hashable {
@@ -132,14 +133,14 @@ public enum LLMError: Error, LocalizedError, Equatable {
         case .http(let status, _, let code, _):
             if let code, let known = ProviderErrorCatalog.title(forCode: code) { return known }
             switch status {
-            case 401, 403: return "模型服务拒绝了访问"
-            case 404: return "找不到模型或接口地址"
-            case 429: return "模型服务拒绝了这次请求"
-            case 500...: return "模型服务暂时不可用"
-            default: return "模型服务返回了错误"
+            case 401, 403: return L("模型服务拒绝了访问")
+            case 404: return L("找不到模型或接口地址")
+            case 429: return L("模型服务拒绝了这次请求")
+            case 500...: return L("模型服务暂时不可用")
+            default: return L("模型服务返回了错误")
             }
-        case .invalidBaseURL: return "Base URL 无效"
-        case .invalidResponse: return "模型返回了无法解析的内容"
+        case .invalidBaseURL: return L("Base URL 无效")
+        case .invalidResponse: return L("模型返回了无法解析的内容")
         }
     }
 
@@ -147,7 +148,7 @@ public enum LLMError: Error, LocalizedError, Equatable {
     public var detail: String? {
         switch self {
         case .http(let status, let message, let code, _):
-            let prefix = code.map { "HTTP \(status)，错误码 \($0)" } ?? "HTTP \(status)"
+            let prefix = code.map { L("HTTP \(status)，错误码 \($0)") } ?? "HTTP \(status)"
             let note = code.flatMap(ProviderErrorCatalog.advice(forCode:))
             return ["\(prefix)：\(message)", note].compactMap(\.self).joined(separator: "\n")
         case .invalidBaseURL(let url): return url
@@ -180,25 +181,25 @@ enum ProviderErrorCatalog {
 
     static func title(forCode code: String) -> String? {
         switch code {
-        case "1113", "insufficient_quota": "账户余额不足，或这次调用不在套餐内"
-        case "1302", "rate_limit_exceeded", "rate_limit_error": "请求频率超过了限制"
-        case "1305", "overloaded_error": "模型当前负载过高"
-        case "1308", "1310", "1316", "1317": "用量额度已用完"
-        case "1309": "Coding Plan 套餐已到期"
-        case "1311": "当前套餐不包含这个模型"
-        case "1313": "账号的套餐权益被限制"
-        case "1315": "API Key 类型与服务不匹配"
-        case "model_not_found", "1211": "找不到这个模型"
-        case "invalid_api_key": "API Key 无效"
+        case "1113", "insufficient_quota": L("账户余额不足，或这次调用不在套餐内")
+        case "1302", "rate_limit_exceeded", "rate_limit_error": L("请求频率超过了限制")
+        case "1305", "overloaded_error": L("模型当前负载过高")
+        case "1308", "1310", "1316", "1317": L("用量额度已用完")
+        case "1309": L("Coding Plan 套餐已到期")
+        case "1311": L("当前套餐不包含这个模型")
+        case "1313": L("账号的套餐权益被限制")
+        case "1315": L("API Key 类型与服务不匹配")
+        case "model_not_found", "1211": L("找不到这个模型")
+        case "invalid_api_key": L("API Key 无效")
         default: nil
         }
     }
 
     static func advice(forCode code: String) -> String? {
         switch code {
-        case "1311": "换一个套餐包含的模型，或改用按量计费的 API Key。"
-        case "1113": "Coding Plan 的额度只在官方支持的工具里生效。在 PastAi 里使用时，请用按量计费的 API Key 和 /api/paas/v4 地址。"
-        case "1313": "Coding Plan 只能在官方支持的工具里使用，请停止用这个 Key 调用，并到智谱个人中心处理。"
+        case "1311": L("换一个套餐包含的模型，或改用按量计费的 API Key。")
+        case "1113": L("Coding Plan 的额度只在官方支持的工具里生效。在 PastAi 里使用时，请用按量计费的 API Key 和 /api/paas/v4 地址。")
+        case "1313": L("Coding Plan 只能在官方支持的工具里使用，请停止用这个 Key 调用，并到智谱个人中心处理。")
         default: nil
         }
     }
@@ -252,7 +253,7 @@ enum HTTPTransport {
     /// Opens a stream, throwing on non-2xx with the provider's own message when it gave one.
     static func open(_ request: URLRequest, session: URLSession) async throws -> URLSession.AsyncBytes {
         let (bytes, response) = try await session.bytes(for: request)
-        guard let http = response as? HTTPURLResponse else { throw LLMError.invalidResponse("非 HTTP 响应") }
+        guard let http = response as? HTTPURLResponse else { throw LLMError.invalidResponse(L("非 HTTP 响应")) }
         guard (200..<300).contains(http.statusCode) else {
             var body = Data()
             for try await byte in bytes.prefix(16_384) { body.append(byte) }
@@ -263,7 +264,7 @@ enum HTTPTransport {
 
     static func get(_ request: URLRequest, session: URLSession) async throws -> Data {
         let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else { throw LLMError.invalidResponse("非 HTTP 响应") }
+        guard let http = response as? HTTPURLResponse else { throw LLMError.invalidResponse(L("非 HTTP 响应")) }
         guard (200..<300).contains(http.statusCode) else { throw failure(http, body: data) }
         return data
     }
@@ -272,7 +273,7 @@ enum HTTPTransport {
         let parsed = try? JSONDecoder().decode(JSONValue.self, from: body)
         let error = parsed?["error"]
         let message = error?["message"]?.string ?? error?.string ?? parsed?["message"]?.string
-            ?? String(data: body.prefix(400), encoding: .utf8) ?? "未知错误"
+            ?? String(data: body.prefix(400), encoding: .utf8) ?? L("未知错误")
         // Providers send this as a string or a number, and Anthropic keeps it in `type`.
         let code = error?["code"]?.string ?? error?["code"]?.int.map(String.init) ?? error?["type"]?.string
         let retryAfter = response.value(forHTTPHeaderField: "Retry-After").flatMap(Double.init)

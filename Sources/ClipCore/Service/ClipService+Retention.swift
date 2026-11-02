@@ -14,11 +14,17 @@ extension ClipService {
         let (report, removedIDs) = try await database.write { db -> (RetentionReport, [Int64]) in
             var report = RetentionReport()
             let unpinned = "NOT EXISTS (SELECT 1 FROM pinboardClip pc WHERE pc.clipID = clip.id)"
+            // A clip that only points at files takes no room here, however large those files are.
+            let storedMedia = """
+                kind IN ('image','video','audio','file') AND NOT EXISTS (
+                    SELECT 1 FROM clipFile reference WHERE reference.clipID = clip.id AND reference.snapshotPath IS NULL
+                )
+                """
 
             if policy.historyDays > 0 {
                 let cutoff = now.addingTimeInterval(-Double(policy.historyDays) * 86_400)
                 try db.execute(
-                    "UPDATE clip SET deletedAt = ? WHERE deletedAt IS NULL AND lastCopiedAt < ? AND \(unpinned)",
+                    "UPDATE clip SET deletedAt = ? WHERE deletedAt IS NULL AND max(lastCopiedAt, coalesce(lastUsedAt, 0)) < ? AND \(unpinned)",
                     [now, cutoff]
                 )
                 report.trashed = db.changes
@@ -29,15 +35,15 @@ extension ClipService {
             report.purged = removed.count
 
             var mediaBytes = try db.scalarInt(
-                "SELECT coalesce(sum(byteSize), 0) FROM clip WHERE kind IN ('image','video','audio','file') AND id NOT IN (SELECT value FROM json_each(?))",
+                "SELECT coalesce(sum(byteSize), 0) FROM clip WHERE \(storedMedia) AND id NOT IN (SELECT value FROM json_each(?))",
                 [Self.jsonArray(removed)]
             )
             if mediaBytes > policy.mediaCapBytes {
                 let candidates = try db.query(
                     """
                     SELECT id, byteSize FROM clip
-                    WHERE kind IN ('image','video','audio','file') AND \(unpinned) AND id NOT IN (SELECT value FROM json_each(?))
-                    ORDER BY coalesce(lastUsedAt, lastCopiedAt) ASC
+                    WHERE \(storedMedia) AND \(unpinned) AND id NOT IN (SELECT value FROM json_each(?))
+                    ORDER BY max(lastCopiedAt, coalesce(lastUsedAt, 0)) ASC
                     """,
                     [Self.jsonArray(removed)]
                 ) { ($0.int64(0), $0.int64(1)) }
@@ -75,6 +81,27 @@ extension ClipService {
         )
         if !removedIDs.isEmpty || report.trashed > 0 { notify(.removed) }
         return final
+    }
+
+    /// Older versions kept a private copy of every small file. Those copies go once the original can
+    /// still be found. One whose original has disappeared is all that is left of it, so it stays.
+    @discardableResult
+    public func releaseFileSnapshots() async throws -> Int {
+        let files = try await database.read { db in
+            try db.query("SELECT \(Self.fileColumns) FROM clipFile WHERE snapshotPath IS NOT NULL", [], Self.decodeFile)
+        }
+        var released = 0
+        for file in files where liveURL(for: file) != nil && !FileSnapshotter.needsOwnCopy(file) {
+            guard let snapshot = file.snapshotPath else { continue }
+            let copy = paths.files.appending(path: snapshot)
+            try? FileManager.default.removeItem(at: copy)
+            rmdir(copy.deletingLastPathComponent().path)
+            try await database.write { db in
+                try db.execute("UPDATE clipFile SET snapshotPath = NULL WHERE id = ?", [file.id])
+            }
+            released += 1
+        }
+        return released
     }
 
     /// Permanently removes everything in the trash. Called only from an explicit user confirmation.
