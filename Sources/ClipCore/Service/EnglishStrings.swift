@@ -315,7 +315,7 @@ extension L10n {
         "永久": "Forever",
         "Pinboard 里的内容不受影响，永远保留。删除的内容在回收站保留 30 天。": "Pinboards are never affected and keep everything. Deleted items stay in the Trash for 30 days.",
         "固定为 Pinboard 的分类": "Categories Pinned as Tabs",
-        "勾选的分类会显示在面板标签栏里，排在你自建的 Pinboard 前面。": "Checked categories appear as tabs in the panel, ahead of your own Pinboards.",
+        "勾选的分类会显示在“剪贴板”左侧，你自建的 Pinboard 在右侧。": "Checked categories appear to the left of Clipboard, and your own Pinboards to the right.",
         "按下新的快捷键…": "Press a new shortcut…",
         "记录": "Recording",
         "忽略密码管理器标记的机密内容": "Ignore items password managers mark as secret",

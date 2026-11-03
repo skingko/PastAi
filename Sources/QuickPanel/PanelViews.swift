@@ -61,9 +61,7 @@ private struct PanelHeader: View {
 
     private var tabs: some View {
         HStack(spacing: 4) {
-            TabButton(title: L("剪贴板"), isSelected: model.tab == .history, leading: AnyView(Image(systemName: "clock.arrow.circlepath"))) {
-                model.tab = .history
-            }
+            // Built-in categories sit left of the clipboard and the user's own boards right of it.
             ForEach(model.settings.pinnedKinds) { kind in
                 TabButton(
                     title: kind.categoryName,
@@ -72,6 +70,9 @@ private struct PanelHeader: View {
                 ) {
                     model.tab = .kind(kind)
                 }
+            }
+            TabButton(title: L("剪贴板"), isSelected: model.tab == .history, leading: AnyView(Image(systemName: "clock.arrow.circlepath"))) {
+                model.tab = .history
             }
             ForEach(model.pinboards) { board in
                 PinboardTab(model: model, board: board)

@@ -230,7 +230,7 @@ public final class PanelModel {
     }
 
     func cycleTab(by offset: Int) {
-        let tabs: [PanelTab] = [.history] + settings.pinnedKinds.map { .kind($0) } + pinboards.map { .pinboard($0.id) }
+        let tabs: [PanelTab] = settings.pinnedKinds.map { .kind($0) } + [.history] + pinboards.map { .pinboard($0.id) }
         guard let current = tabs.firstIndex(of: tab) else { return }
         tab = tabs[(current + offset + tabs.count) % tabs.count]
     }

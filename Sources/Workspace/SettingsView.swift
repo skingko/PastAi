@@ -88,7 +88,7 @@ private struct GeneralSettings: View {
             } header: {
                 Text(L("固定为 Pinboard 的分类"))
             } footer: {
-                Text(L("勾选的分类会显示在面板标签栏里，排在你自建的 Pinboard 前面。"))
+                Text(L("勾选的分类会显示在“剪贴板”左侧，你自建的 Pinboard 在右侧。"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
