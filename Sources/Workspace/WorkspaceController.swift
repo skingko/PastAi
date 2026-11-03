@@ -53,7 +53,9 @@ public final class WorkspaceController: NSObject, NSWindowDelegate {
             )
             window.title = "PastAi"
             window.isReleasedWhenClosed = false
-            window.contentView = NSHostingView(rootView: WorkspaceView(library: library, agent: agent))
+            window.contentView = NSHostingView(rootView: WorkspaceView(library: library, agent: agent) { [weak self] in
+                self?.showSettings()
+            })
             window.setFrameAutosaveName("PastAiMain")
             window.delegate = self
             window.center()
@@ -314,6 +316,7 @@ public final class WorkspaceController: NSObject, NSWindowDelegate {
             "libraryCount": library.clips.count,
             "pinboardNames": library.pinboards.map(\.name),
             "tables": debugTables(),
+            "extensionOrder": extensions.installed.map { $0.id.replacingOccurrences(of: "io.github.skingko.pastai.", with: "") },
             "marketCount": market.entries.count,
             "marketNotice": market.notice ?? "",
             "installedExtensions": extensions.installed.map { "\($0.id)@\($0.manifest.version)" },

@@ -28,6 +28,12 @@ public enum TemplateRenderer {
         for (key, value) in options {
             rendered = rendered.replacingOccurrences(of: "{option.\(key)}", with: encode(value))
         }
+        if !namesEveryOption(template, options: options) {
+            for key in referencedOptions(in: template) {
+                rendered = rendered.replacingOccurrences(of: "{option.\(key)}", with: "")
+            }
+            rendered = withoutEmptyQueryItems(rendered)
+        }
         guard let url = URL(string: rendered), let scheme = url.scheme?.lowercased() else {
             throw ExtensionError.invalidURL(String(rendered.prefix(120)))
         }
@@ -36,6 +42,21 @@ public enum TemplateRenderer {
             throw ExtensionError.blockedScheme(scheme)
         }
         return url
+    }
+
+    /// False when the template uses an option left empty. Such a link names no target, so the app shows
+    /// its own chooser, and pressing Return there would act on whatever happens to be selected.
+    public static func namesEveryOption(_ template: String, options: [String: String]) -> Bool {
+        referencedOptions(in: template).allSatisfy { options[$0]?.isEmpty == false }
+    }
+
+    /// An empty option takes its query parameter with it, so `?phone={option.phone}&text={text}` covers
+    /// both "send to this contact" and "let me choose".
+    private static func withoutEmptyQueryItems(_ url: String) -> String {
+        guard var components = URLComponents(string: url), let items = components.percentEncodedQueryItems else { return url }
+        let kept = items.filter { $0.value?.isEmpty == false }
+        components.percentEncodedQueryItems = kept.isEmpty ? nil : kept
+        return components.string ?? url
     }
 
     public static func prompt(_ template: String, text: String, options: [String: String]) -> String {

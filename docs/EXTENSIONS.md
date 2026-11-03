@@ -54,6 +54,8 @@ extensions/my-tool/
 
 Templates can use `{text}`, which is percent-encoded so it cannot change the URL, and `{option.<id>}`. `{text.raw}` inserts the selection unencoded and only works for `http`, `https` and `mailto` links.
 
+An option left empty is removed along with its query parameter, so `whatsapp://send?phone={option.phone}&text={text}` becomes `whatsapp://send?text=...` and WhatsApp asks who to send to. `returnKeyOption` only presses Return when every option in the link is filled in.
+
 Blocked URL schemes include `file`, `javascript`, `data`, `ssh` and `shortcuts`.
 
 ### Scripts
@@ -144,6 +146,8 @@ extensions/my-tool/
 | `ai` | `prompt`，可选 `system` | 把提示词发给用户的模型并显示结果 |
 
 模板可以使用 `{text}`，它会被百分号编码，无法改变网址结构；也可以使用 `{option.<id>}`。`{text.raw}` 插入未编码的选中内容，只能用于 `http`、`https` 和 `mailto` 链接。
+
+留空的设置项会连同它的查询参数一起去掉，所以 `whatsapp://send?phone={option.phone}&text={text}` 会变成 `whatsapp://send?text=...`，由 WhatsApp 询问发给谁。`returnKeyOption` 只在链接里的设置项都已填写时才按回车。
 
 被禁止的协议包括 `file`、`javascript`、`data`、`ssh` 和 `shortcuts`。
 

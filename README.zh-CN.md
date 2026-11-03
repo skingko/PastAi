@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/images/logo.svg" alt="PastAi 标志" width="96">
+
 # PastAi
 
 **macOS 上的开源 AI 剪贴板管理器和划词工具条**
@@ -83,7 +85,7 @@ PastAi 常驻菜单栏。首次使用时会申请**辅助功能**权限，用于
 - **复制**
 - **翻译**：调用你配置的 AI 模型，在小弹窗里流式显示。译文自动加入剪贴板，可以随处粘贴，也可以点**插入**直接替换原文。
 - **谷歌搜索**
-- **WhatsApp**：把选中内容发给你指定的联系人，也可以设置为自动发送。
+- **WhatsApp** 带着选中内容打开 WhatsApp 自己的联系人选择，也可以固定一个联系人直接发送，并代你按下发送。
 
 ![翻译弹窗](docs/images/zh/translate.png)
 
@@ -91,7 +93,7 @@ PastAi 常驻菜单栏。首次使用时会申请**辅助功能**权限，用于
 
 ## 组件
 
-打开**设置 › 组件**，可以调整工具条顺序、配置每个组件、浏览市场。市场就是本仓库的 [`extensions`](extensions) 目录，直接从 GitHub 获取，app 内也带有一份副本，离线同样可用。
+打开**设置 › 组件**，可以拖动调整工具条顺序、删除组件、配置每个组件、浏览市场。市场就是本仓库的 [`extensions`](extensions) 目录，直接从 GitHub 获取，app 内也带有一份副本，离线同样可用。
 
 ![组件设置](docs/images/zh/extensions.png)
 

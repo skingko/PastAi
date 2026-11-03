@@ -604,14 +604,14 @@
     {
       "id": "io.github.skingko.pastai.whatsapp",
       "folder": "whatsapp",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "name": {
         "en": "WhatsApp",
         "zh": "WhatsApp"
       },
       "description": {
-        "en": "Send the selection to a chosen contact.",
-        "zh": "把选中内容发送给指定联系人。"
+        "en": "Send the selection through WhatsApp: pick a contact there, or set one to go straight to.",
+        "zh": "通过 WhatsApp 发送选中内容：在 WhatsApp 里选择联系人，也可以固定一个联系人直接发送。"
       },
       "category": "social",
       "regions": [
@@ -621,7 +621,7 @@
       "files": [
         {
           "path": "extension.json",
-          "sha256": "7193cce061bd97cced6ac0ec58b54e8ee8352761617a5636c44740b5bd14fd67"
+          "sha256": "f39db32e07dcd60b11e12bf03b25c024dacea8295916a49bb4a798a60ac493b0"
         },
         {
           "path": "icon.svg",

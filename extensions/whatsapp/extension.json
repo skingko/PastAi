@@ -1,15 +1,15 @@
 {
   "schema": 1,
   "id": "io.github.skingko.pastai.whatsapp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "PastAi",
   "name": {
     "en": "WhatsApp",
     "zh": "WhatsApp"
   },
   "description": {
-    "en": "Send the selection to a chosen contact.",
-    "zh": "把选中内容发送给指定联系人。"
+    "en": "Send the selection through WhatsApp: pick a contact there, or set one to go straight to.",
+    "zh": "通过 WhatsApp 发送选中内容：在 WhatsApp 里选择联系人，也可以固定一个联系人直接发送。"
   },
   "category": "social",
   "regions": [
@@ -24,21 +24,20 @@
       "id": "phone",
       "type": "string",
       "label": {
-        "en": "Contact number",
-        "zh": "联系人号码"
+        "en": "Always send to (optional)",
+        "zh": "固定发给（可选）"
       },
       "placeholder": {
-        "en": "Country code and number, digits only",
-        "zh": "国家码加号码，只填数字，如 8613800000000"
-      },
-      "required": true
+        "en": "Leave empty to pick a contact each time",
+        "zh": "留空则每次选择联系人；固定时填国家码加号码"
+      }
     },
     {
       "id": "autoSend",
       "type": "boolean",
       "label": {
-        "en": "Send automatically",
-        "zh": "自动发送"
+        "en": "Send automatically to that contact",
+        "zh": "发给固定联系人时自动发送"
       },
       "defaultValue": "false"
     }

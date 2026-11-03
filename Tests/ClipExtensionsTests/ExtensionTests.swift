@@ -315,6 +315,50 @@ private func temporaryFolder() throws -> URL {
         #expect(english == "Characters 7\nWords 2\nLines 1")
     }
 
+    @Test func anUnsetOptionTakesItsQueryParameterWithIt() throws {
+        let template = "whatsapp://send?phone={option.phone}&text={text}"
+        #expect(try TemplateRenderer.url(template, text: "你好 a&b", options: [:]).absoluteString == "whatsapp://send?text=%E4%BD%A0%E5%A5%BD%20a%26b")
+        #expect(try TemplateRenderer.url(template, text: "hi", options: ["phone": ""]).absoluteString == "whatsapp://send?text=hi")
+        #expect(try TemplateRenderer.url(template, text: "hi", options: ["phone": "86138"]).absoluteString == "whatsapp://send?phone=86138&text=hi")
+        #expect(try TemplateRenderer.url("https://wa.me/{option.phone}?text={text}", text: "hi", options: [:]).absoluteString == "https://wa.me/?text=hi")
+    }
+
+    @Test func aLinkWithAFilledOptionIsLeftExactlyAsWritten() throws {
+        let url = try TemplateRenderer.url("https://example.com/?a=&b={option.b}&c={text}", text: "x", options: ["b": "1"])
+        #expect(url.absoluteString == "https://example.com/?a=&b=1&c=x")
+    }
+
+    @Test func returnIsOnlySafeWhenTheLinkNamesItsTarget() {
+        let template = "whatsapp://send?phone={option.phone}&text={text}"
+        #expect(!TemplateRenderer.namesEveryOption(template, options: [:]))
+        #expect(!TemplateRenderer.namesEveryOption(template, options: ["phone": ""]))
+        #expect(TemplateRenderer.namesEveryOption(template, options: ["phone": "86138"]))
+        #expect(TemplateRenderer.namesEveryOption("https://example.com/?q={text}", options: [:]))
+    }
+
+    @Test func whatsAppNeedsNoSavedContact() throws {
+        let entry = try #require(try catalog().extensions.first { $0.folder == "whatsapp" })
+        let phone = try #require(try manifest(entry).options?.first { $0.id == "phone" })
+        #expect(phone.required != true)
+    }
+
+    @MainActor @Test func theToolbarFollowsTheInstalledOrderAndForgetsDeletedExtensions() throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: "pastai-order-\(UUID().uuidString)", directoryHint: .isDirectory)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let library = ExtensionLibrary(root: root)
+        for id in ["local.a", "local.b", "local.c"] { try library.installLocal(sample(id: id), script: nil) }
+        let input = SelectionInput(text: "x")
+
+        library.move(fromOffsets: [2], toOffset: 0)
+        #expect(library.actions(for: input).map(\.id) == ["local.c", "local.a", "local.b"])
+        library.move(fromOffsets: [0], toOffset: 3)
+        #expect(library.actions(for: input).map(\.id) == ["local.a", "local.b", "local.c"])
+
+        try library.remove("local.b")
+        #expect(library.actions(for: input).map(\.id) == ["local.a", "local.c"])
+        #expect(ExtensionLibrary(root: root).installed.map(\.id) == ["local.a", "local.c"])
+    }
+
     @Test func translateAimsAtTheLanguageOfTheMac() throws {
         let entry = try #require(try catalog().extensions.first { $0.folder == "translate" })
         let options = try manifest(entry).options ?? []

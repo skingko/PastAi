@@ -171,6 +171,7 @@ public final class ActionBarController {
             case .url(let template, let fallback, let returnKeyOption):
                 try open(template: template, fallback: fallback, text: context.text, options: options)
                 let wantsReturn = returnKeyOption.map { options[$0] == "true" } ?? false
+                    && TemplateRenderer.namesEveryOption(template, options: options)
                 dismissAll()
                 if wantsReturn { pressReturnInNewFrontApp() }
             case .app(let bundleID, let copyFirst):

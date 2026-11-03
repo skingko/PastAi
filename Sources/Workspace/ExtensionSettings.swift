@@ -3,6 +3,7 @@ import ClipCore
 import ClipExtensions
 import Observation
 import SwiftUI
+import UniformTypeIdentifiers
 
 @MainActor
 @Observable
@@ -132,6 +133,7 @@ private struct InstalledExtensions: View {
     var library: ExtensionLibrary
     var onAskAgent: () -> Void
     @State private var isTrusted = PasteSimulator.isTrusted
+    @State private var dragging: String?
 
     var body: some View {
         Form {
@@ -148,14 +150,13 @@ private struct InstalledExtensions: View {
             }
             Section {
                 ForEach(library.installed) { item in
-                    ExtensionRow(item: item, library: library)
+                    ExtensionRow(item: item, library: library, dragging: $dragging)
                 }
-                .onMove { library.move(fromOffsets: $0, toOffset: $1) }
             } header: {
                 Text(L("浮条上的组件"))
             } footer: {
                 HStack {
-                    Text(L("拖动调整顺序。")).font(.caption).foregroundStyle(.secondary)
+                    Text(L("拖动调整顺序，浮条按这个顺序显示。")).font(.caption).foregroundStyle(.secondary)
                     Spacer()
                     Button(L("让 Agent 写一个"), action: onAskAgent).controlSize(.small)
                 }
@@ -171,20 +172,31 @@ private struct InstalledExtensions: View {
 private struct ExtensionRow: View {
     var item: InstalledExtension
     var library: ExtensionLibrary
+    @Binding var dragging: String?
     @State private var isExpanded = false
+    @State private var confirmsRemoval = false
 
     private var hasOptions: Bool { !(item.manifest.options ?? []).isEmpty }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
-                ExtensionIconView(icon: item.manifest.icon, fileURL: library.iconURL(for: item), size: 16)
-                    .frame(width: 22)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(item.manifest.name.localized).font(.system(size: 13))
-                    Text(item.manifest.description.localized).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                // The controls stay out of the drag area so they keep working as buttons.
+                HStack(spacing: 10) {
+                    Image(systemName: "line.3.horizontal").font(.system(size: 11)).foregroundStyle(.tertiary)
+                    ExtensionIconView(icon: item.manifest.icon, fileURL: library.iconURL(for: item), size: 16)
+                        .frame(width: 22)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(item.manifest.name.localized).font(.system(size: 13))
+                        Text(item.manifest.description.localized).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
                 }
-                Spacer()
+                .contentShape(Rectangle())
+                .onDrag {
+                    dragging = item.id
+                    return NSItemProvider(object: item.id as NSString)
+                }
                 if hasOptions {
                     Button {
                         isExpanded.toggle()
@@ -194,6 +206,13 @@ private struct ExtensionRow: View {
                     .buttonStyle(.borderless)
                     .help(L("设置"))
                 }
+                Button {
+                    confirmsRemoval = true
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.borderless)
+                .help(L("删除"))
                 Toggle("", isOn: Binding(get: { item.isEnabled }, set: { library.setEnabled(item.id, $0) }))
                     .labelsHidden()
                     .toggleStyle(.switch)
@@ -205,9 +224,39 @@ private struct ExtensionRow: View {
                 }
             }
         }
-        .contextMenu {
-            Button(L("移除"), role: .destructive) { try? library.remove(item.id) }
+        .onDrop(of: [.text], delegate: ExtensionDropDelegate(target: item.id, dragging: $dragging, library: library))
+        .alert(L("删除“\(item.manifest.name.localized)”？"), isPresented: $confirmsRemoval) {
+            Button(L("删除"), role: .destructive) { try? library.remove(item.id) }
+            Button(L("取消"), role: .cancel) {}
+        } message: {
+            Text(item.manifest.isLocal ? L("这是本地组件，删除后无法恢复。") : L("可以在组件市场重新安装，它的设置不会保留。"))
         }
+    }
+}
+
+/// `onMove` does nothing inside a macOS `Form`, so rows reorder through drag and drop. The order changes
+/// as the row passes over its neighbours, which shows where it will land.
+private struct ExtensionDropDelegate: DropDelegate {
+    var target: String
+    @Binding var dragging: String?
+    var library: ExtensionLibrary
+
+    func validateDrop(info: DropInfo) -> Bool { dragging != nil }
+
+    func dropEntered(info: DropInfo) {
+        guard let dragging, dragging != target,
+              let from = library.installed.firstIndex(where: { $0.id == dragging }),
+              let to = library.installed.firstIndex(where: { $0.id == target }) else { return }
+        withAnimation(.easeInOut(duration: 0.15)) {
+            library.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
+
+    func performDrop(info: DropInfo) -> Bool {
+        dragging = nil
+        return true
     }
 }
 

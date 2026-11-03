@@ -84,6 +84,11 @@ final class DevDriver: NSObject {
         case "bar-tap-local": bar.debugPerform("local.\(argument)")
         case "bar-hide": bar.dismissAll()
         case "real-click": postRealClick(argument)
+        case "real-drag":
+            let fields = argument.split(separator: " ").map(String.init)
+            if fields.count == 5, let window = workspace.debugWindow(fields[0]) {
+                postRealDrag(in: window, fields.dropFirst().compactMap { Double($0) })
+            }
         case "clipboard-save": savedClipboard = PasteboardRestorePoint()
         case "clipboard-restore":
             savedClipboard?.restore()
@@ -131,6 +136,33 @@ final class DevDriver: NSObject {
         let point = CGPoint(x: fields[0], y: fields[1])
         for type in [CGEventType.leftMouseDown, .leftMouseUp] {
             CGEvent(mouseEventSource: nil, mouseType: type, mouseCursorPosition: point, mouseButton: .left)?.post(tap: .cghidEventTap)
+        }
+    }
+
+    /// Format: `<window> <x1> <y1> <x2> <y2>`, from the window's top left. Drags the real pointer through
+    /// the window server, which is the only way to prove a drag source and its drop targets work together.
+    private func postRealDrag(in window: NSWindow, _ points: [Double]) {
+        guard points.count == 4, let screen = NSScreen.screens.first else { return }
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        let origin = CGPoint(x: window.frame.minX, y: screen.frame.maxY - window.frame.maxY)
+        let start = CGPoint(x: origin.x + points[0], y: origin.y + points[1])
+        let end = CGPoint(x: origin.x + points[2], y: origin.y + points[3])
+        func post(_ type: CGEventType, _ point: CGPoint) {
+            CGEvent(mouseEventSource: nil, mouseType: type, mouseCursorPosition: point, mouseButton: .left)?.post(tap: .cghidEventTap)
+        }
+        Task {
+            post(.mouseMoved, start)
+            try? await Task.sleep(for: .milliseconds(150))
+            post(.leftMouseDown, start)
+            try? await Task.sleep(for: .milliseconds(150))
+            for step in 1...30 {
+                let progress = Double(step) / 30
+                post(.leftMouseDragged, CGPoint(x: start.x + (end.x - start.x) * progress, y: start.y + (end.y - start.y) * progress))
+                try? await Task.sleep(for: .milliseconds(30))
+            }
+            try? await Task.sleep(for: .milliseconds(250))
+            post(.leftMouseUp, end)
         }
     }
 

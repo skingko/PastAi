@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 536 536">
+  <defs>
+    <linearGradient id="tangerine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FF9A3C"/>
+      <stop offset="1" stop-color="#F4590F"/>
+    </linearGradient>
+    <mask id="gap">
+      <rect width="536" height="536" fill="#fff"/>
+      <rect x="-24" y="82" width="478" height="478" rx="120" fill="#000"/>
+    </mask>
+  </defs>
+  <rect x="106" width="430" height="430" rx="96" fill="#FF9A3C" fill-opacity="0.42" mask="url(#gap)"/>
+  <rect y="106" width="430" height="430" rx="96" fill="url(#tangerine)"/>
+  <path fill="#fff" d="M215.0 171.0 C237.5 298.5 237.5 298.5 365.0 321.0 C237.5 343.5 237.5 343.5 215.0 471.0 C192.5 343.5 192.5 343.5 65.0 321.0 C192.5 298.5 192.5 298.5 215.0 171.0Z"/>
+</svg>

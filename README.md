@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/images/logo.svg" alt="PastAi logo" width="96">
+
 # PastAi
 
 **Open-source AI clipboard manager and text selection toolbar for macOS**
@@ -83,7 +85,7 @@ Four extensions are on by default:
 - **Copy**
 - **Translate** runs through your AI model and streams into a small popover. The result is added to your clipboard, ready to paste anywhere, and **Insert** replaces the original text in place.
 - **Google** searches the web.
-- **WhatsApp** sends the selection to a contact you choose, and can press send for you.
+- **WhatsApp** opens WhatsApp's own contact picker with your selection, or goes straight to a contact you set and can press send for you.
 
 ![Translate popover](docs/images/en/translate.png)
 
@@ -91,7 +93,7 @@ The toolbar never takes focus, which is why Insert can replace your selection di
 
 ## Extensions
 
-Open **Settings > Extensions** to reorder the toolbar, configure each extension and browse the market. The market is the [`extensions`](extensions) folder of this repository, fetched straight from GitHub, with a copy inside the app so it works offline.
+Open **Settings > Extensions** to drag the toolbar into order, delete extensions, configure each one and browse the market. The market is the [`extensions`](extensions) folder of this repository, fetched straight from GitHub, with a copy inside the app so it works offline.
 
 ![Extension settings](docs/images/en/extensions.png)
 

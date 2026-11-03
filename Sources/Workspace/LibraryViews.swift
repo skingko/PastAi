@@ -5,6 +5,7 @@ import SwiftUI
 struct WorkspaceView: View {
     @Bindable var library: LibraryModel
     @Bindable var agent: AgentModel
+    var onOpenSettings: () -> Void
     @State private var showsAgent = true
 
     var body: some View {
@@ -32,6 +33,12 @@ struct WorkspaceView: View {
                     Label("Agent", systemImage: "sparkles")
                 }
                 .help(L("显示或隐藏 Agent"))
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: onOpenSettings) {
+                    Label(L("设置"), systemImage: "gearshape")
+                }
+                .help(L("设置"))
             }
         }
     }
